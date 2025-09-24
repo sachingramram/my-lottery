@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 type ChartType = "day" | "night";
 type Week = { range: string; days: string[] };
 
-type ApiChartOk = { ok: true; data: { weeks: Week[] } };
+type ApiChartOk = { ok: true; data: { weeks: Week[]; isAdmin?: boolean } };
 type ApiChartErr = { ok: false; error?: string };
 type ApiChartResp = ApiChartOk | ApiChartErr;
 
@@ -42,7 +42,6 @@ function isApiChartResp(v: unknown): v is ApiChartResp {
 
 /* ---------------- panel layout ---------------- */
 
-
 // allow digits & * # @ ; max 2 chars each slot
 function clampToken(s: string, max = 2): string {
   return s.replace(/[^0-9*#@]/g, "").slice(0, max);
@@ -58,14 +57,12 @@ function parsePanelString(s: string): Panel {
     // New format: explicit positions with '|'
     if (line.includes("|")) {
       const parts = line.split("|");
-      // trim to expected, pad with empties
       const out = parts.slice(0, expected).map((x) => clampToken(x));
       while (out.length < expected) out.push("");
       return out;
     }
     // Legacy format: whitespace tokens (ambiguous)
     const toks = line.split(/\s+/).filter(Boolean).map(clampToken);
-    // place left->right; pad empties to keep length
     const out = toks.slice(0, expected);
     while (out.length < expected) out.push("");
     return out;
@@ -121,6 +118,9 @@ export default function ChartPage() {
   const [err, setErr] = useState("");
   const [offline, setOffline] = useState(false);
 
+  // admin gate
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+
   // single-active editor (overlay)
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorWI, setEditorWI] = useState<number | null>(null);
@@ -148,7 +148,15 @@ export default function ChartPage() {
         }
         if (!isApiChartResp(parsed)) throw new Error("Unexpected API shape.");
         if (!parsed.ok) throw new Error(parsed.error ?? "API returned error.");
-        if (!cancelled) setWeeks(parsed.data.weeks);
+
+        if (!cancelled) {
+          setWeeks(parsed.data.weeks);
+          // if API provides admin flag, use it
+          const maybeAdmin = (parsed as ApiChartOk).data.isAdmin;
+          if (typeof maybeAdmin === "boolean") {
+            setCanEdit(maybeAdmin);
+          }
+        }
       } catch (e: unknown) {
         const message =
           e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load API, showing offline view";
@@ -166,8 +174,28 @@ export default function ChartPage() {
     };
   }, [y, type]);
 
+  // fallback admin check via /api/daily (which returns isAdmin in your app)
+  useEffect(() => {
+    (async () => {
+      try {
+        if (canEdit) return; // already known
+        const r = await fetch("/api/daily", { cache: "no-store" });
+        const j = await r.json().catch(() => null) as
+          | { ok: true; data?: { isAdmin?: boolean } }
+          | { ok: false }
+          | null;
+        if (j && j.ok && j.data && typeof j.data.isAdmin === "boolean") {
+          setCanEdit(j.data.isAdmin);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, [canEdit]);
+
   function openEditor(wi: number, di: number, initial: string) {
     if (offline) return;
+    if (!canEdit) return;           // <-- lock non-admin
     if (hasGlobalActive) return;
     setEditorWI(wi);
     setEditorDI(di);
@@ -249,7 +277,7 @@ export default function ChartPage() {
               DB offline – read-only
             </span>
           )}
-          {hasGlobalActive && (
+          {hasGlobalActive && canEdit && (
             <span className="text-xs md:text-sm bg-white/80 border border-[var(--red)] px-2 py-0.5 rounded">
               Editing — finish or cancel
             </span>
@@ -280,18 +308,23 @@ export default function ChartPage() {
                   <tr key={wi}>
                     <Td className="text-center whitespace-pre-wrap">{w.range}</Td>
                     {w.days.map((val, di) => {
-                      const locked = hasGlobalActive || offline;
+                      const locked = offline || !canEdit || hasGlobalActive;
+                      // Non-admin or offline => plain cell (no button/focus)
+                      if (locked) {
+                        return (
+                          <td key={di} className="border-strong border-[var(--red)] px-1 md:px-2 py-2 md:py-3 align-top">
+                            <PanelView value={val} />
+                          </td>
+                        );
+                      }
+                      // Admin & not currently editing another cell => clickable
                       return (
                         <td key={di} className="border-strong border-[var(--red)] px-1 md:px-2 py-2 md:py-3 align-top">
                           <button
                             type="button"
                             onClick={() => openEditor(wi, di, val)}
-                            className={`w-full min-h-[56px] md:min-h-[72px] text-[var(--red)] ${
-                              locked ? "opacity-40 cursor-not-allowed pointer-events-none" : ""
-                            }`}
-                            aria-disabled={locked}
-                            tabIndex={locked ? -1 : 0}
-                            title={locked ? "Finish current edit to edit another cell" : "Click to edit"}
+                            className="w-full min-h-[56px] md:min-h-[72px] text-[var(--red)]"
+                            title="Click to edit"
                           >
                             <PanelView value={val} />
                           </button>
@@ -307,109 +340,100 @@ export default function ChartPage() {
       </div>
 
       {/* --------- FULLSCREEN OVERLAY EDITOR --------- */}
-   {editorOpen && editorWI !== null && editorDI !== null && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-3">
-    {/* sheet/card */}
-    <div className="w-full max-w-[520px] bg-[var(--yellow)] border-strong border-[var(--red)] rounded-2xl shadow-xl p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[var(--red)] text-xl sm:text-2xl font-semibold">
-          Edit Cell — Week {editorWI + 1},{" "}
-          {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][editorDI]}
-        </h3>
-        <button
-          onClick={closeEditor}
-          className="text-[var(--red)] border border-[var(--red)] px-3 py-1 rounded"
-        >
-          ✕
-        </button>
-      </div>
+      {editorOpen && editorWI !== null && editorDI !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-3">
+          {/* sheet/card */}
+          <div className="w-full max-w-[520px] bg-[var(--yellow)] border-strong border-[var(--red)] rounded-2xl shadow-xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[var(--red)] text-xl sm:text-2xl font-semibold">
+                Edit Cell — Week {editorWI + 1},{" "}
+                {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][editorDI]}
+              </h3>
+              <button
+                onClick={closeEditor}
+                className="text-[var(--red)] border border-[var(--red)] px-3 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
 
-      {/* big preview */}
-       
+            {/* inputs grid large tap targets */}
+            <div className="flex flex-col gap-3">
+              {/* top row (3 equal cols; inputs in col 1 and 3) */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-start-1">
+                  <BigInput
+                    value={editorPanel.tl}
+                    onChange={(v) => setEditorPanel((p) => ({ ...p, tl: clampToken(v) }))}
+                  />
+                </div>
+                <div className="col-start-3">
+                  <BigInput
+                    value={editorPanel.tr}
+                    onChange={(v) => setEditorPanel((p) => ({ ...p, tr: clampToken(v) }))}
+                  />
+                </div>
+              </div>
 
-      {/* inputs grid large tap targets */}
-      <div className="flex flex-col gap-3">
-        {/* top row (3 equal cols; inputs in col 1 and 3) */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-start-1">
-            <BigInput
-              value={editorPanel.tl}
-              onChange={(v) => setEditorPanel((p) => ({ ...p, tl: clampToken(v) }))}
-            />
-          </div>
-          <div className="col-start-3">
-            <BigInput
-               
-              value={editorPanel.tr}
-              onChange={(v) => setEditorPanel((p) => ({ ...p, tr: clampToken(v) }))}
-            />
+              {/* middle row (3 equal cols; inputs in 1/2/3) */}
+              <div className="grid grid-cols-3 gap-3">
+                <BigInput
+                  value={editorPanel.ml}
+                  onChange={(v) => setEditorPanel((p) => ({ ...p, ml: clampToken(v) }))}
+                />
+                <BigInput
+                  value={editorPanel.mc}
+                  onChange={(v) => setEditorPanel((p) => ({ ...p, mc: clampToken(v) }))}
+                />
+                <BigInput
+                  value={editorPanel.mr}
+                  onChange={(v) => setEditorPanel((p) => ({ ...p, mr: clampToken(v) }))}
+                />
+              </div>
+
+              {/* bottom row (3 equal cols; inputs in col 1 and 3) */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-start-1">
+                  <BigInput
+                    value={editorPanel.bl}
+                    onChange={(v) => setEditorPanel((p) => ({ ...p, bl: clampToken(v) }))}
+                  />
+                </div>
+                <div className="col-start-3">
+                  <BigInput
+                    value={editorPanel.br}
+                    onChange={(v) => setEditorPanel((p) => ({ ...p, br: clampToken(v) }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* actions: all equal width */}
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+              <button
+                className="w-full bg-[var(--yellow)] border border-[var(--red)] text-[var(--red)] py-2 sm:py-3 rounded"
+                onClick={saveEditor}
+              >
+                Save
+              </button>
+              <button
+                className="w-full bg-white border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
+                onClick={closeEditor}
+              >
+                Cancel
+              </button>
+              <button
+                className="w-full bg-red-100 border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
+                onClick={() => {
+                  if (confirm("Clear this cell?")) deleteEditor();
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* middle row (3 equal cols; inputs in 1/2/3) */}
-        <div className="grid grid-cols-3 gap-3">
-          <BigInput
-             
-            value={editorPanel.ml}
-            onChange={(v) => setEditorPanel((p) => ({ ...p, ml: clampToken(v) }))}
-          />
-          <BigInput
-            value={editorPanel.mc}
-            onChange={(v) => setEditorPanel((p) => ({ ...p, mc: clampToken(v) }))}
-          />
-          <BigInput
-            value={editorPanel.mr}
-            onChange={(v) => setEditorPanel((p) => ({ ...p, mr: clampToken(v) }))}
-          />
-        </div>
-
-        {/* bottom row (3 equal cols; inputs in col 1 and 3) */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-start-1">
-            <BigInput
-               
-              value={editorPanel.bl}
-              onChange={(v) => setEditorPanel((p) => ({ ...p, bl: clampToken(v) }))}
-            />
-          </div>
-          <div className="col-start-3">
-            <BigInput
-               
-              value={editorPanel.br}
-              onChange={(v) => setEditorPanel((p) => ({ ...p, br: clampToken(v) }))}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* actions: all equal width */}
-      <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-        <button
-          className="w-full bg-[var(--yellow)] border border-[var(--red)] text-[var(--red)] py-2 sm:py-3 rounded"
-          onClick={saveEditor}
-        >
-          Save
-        </button>
-        <button
-          className="w-full bg-white border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
-          onClick={closeEditor}
-        >
-          Cancel
-        </button>
-        <button
-          className="w-full bg-red-100 border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
-          onClick={() => {
-            if (confirm("Clear this cell?")) deleteEditor();
-          }}
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-
+      )}
     </>
   );
 }
@@ -431,17 +455,15 @@ function BigInput({
   value,
   onChange,
 }: {
-  
   value: string;
   onChange: (v: string) => void;
 }) {
   return (
     <label className="flex flex-col gap-1 w-full min-w-0">
-      
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        inputMode="numeric"
+        inputMode="text"
         className="w-full min-w-0 text-center text-2xl sm:text-3xl tracking-wider
                    border border-[var(--red)] bg-yellow-300/30 rounded
                    h-14 sm:h-16 px-3"
@@ -451,10 +473,7 @@ function BigInput({
   );
 }
 
-
-
 /* --------- local fallback generator: full year, week rows, blank cells --------- */
-// in app/chart/[year]/[type]/page.tsx
 function buildYearRows(year: number): { range: string; days: string[] }[] {
   const rows: { range: string; days: string[] }[] = [];
 
