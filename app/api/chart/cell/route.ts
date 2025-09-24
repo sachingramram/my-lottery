@@ -44,21 +44,23 @@ function isPatchBody(v: unknown): v is PatchBody {
 
 /* ---------- auth ---------- */
 async function isAuthed(): Promise<boolean> {
-  const cookieStore = await cookies();      // await lagao
-const token = cookieStore.get(cookieName)?.value;
-
-  // lightweight “exists” check; if you use JWT verify, import and verify here.
+  const cookieStore = await cookies();
+  const token = cookieStore.get(cookieName)?.value;
+  // NOTE: this only checks the cookie exists.
+  // If you added JWT verify earlier, swap this with a proper verifier.
   return typeof token === "string" && token.length > 0;
 }
 
-/* ---------- sanitize ---------- */
-function sanitizeDigitsSpacesNewlines(input: string): string {
+/* ---------- sanitize (allow digits + * # @ + spaces/newlines) ---------- */
+function sanitizePanelString(input: string): string {
+  // allow digits, spaces, newlines, *, #, @, and the pipe '|' for fixed positions
   return input
-    .replace(/[^\d\s\n]/g, "")
+    .replace(/[^0-9*#@|\s\n]/g, "")
     .split("\n")
     .map((l) => l.trim().replace(/\s+/g, " "))
     .join("\n");
 }
+
 
 /* ---------- PATCH: save a single cell ---------- */
 export async function PATCH(req: Request) {
@@ -70,16 +72,16 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const bodyUnknown = await req.json().catch(() => null);
-    if (!isPatchBody(bodyUnknown)) {
+    const body = await req.json().catch(() => null);
+    if (!isPatchBody(body)) {
       return NextResponse.json(
         { ok: false as const, error: "Bad payload" },
         { status: 400 }
       );
     }
 
-    const { year, type, weekIndex, dayIndex } = bodyUnknown;
-    const value = sanitizeDigitsSpacesNewlines(bodyUnknown.value);
+    const { year, type, weekIndex, dayIndex } = body;
+    const value = sanitizePanelString(body.value);
 
     await dbConnect();
 
@@ -102,7 +104,7 @@ export async function PATCH(req: Request) {
     await doc.save();
 
     return NextResponse.json({ ok: true as const, value });
-  } catch (err) {
+  } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json(
       { ok: false as const, error: message },
@@ -170,7 +172,7 @@ export async function DELETE(req: Request) {
     await doc.save();
 
     return NextResponse.json({ ok: true as const });
-  } catch (err) {
+  } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json(
       { ok: false as const, error: message },

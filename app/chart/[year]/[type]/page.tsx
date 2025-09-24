@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 /* ---------------- types ---------------- */
 type ChartType = "day" | "night";
@@ -10,6 +10,9 @@ type Week = { range: string; days: string[] };
 type ApiChartOk = { ok: true; data: { weeks: Week[] } };
 type ApiChartErr = { ok: false; error?: string };
 type ApiChartResp = ApiChartOk | ApiChartErr;
+
+type SaveResp = { ok: true; value: string } | { ok: false; error?: string };
+type DelResp = { ok: true } | { ok: false; error?: string };
 
 /* ----------- runtime guards ----------- */
 function isWeek(v: unknown): v is Week {
@@ -37,9 +40,75 @@ function isApiChartResp(v: unknown): v is ApiChartResp {
   return false;
 }
 
+/* ---------------- panel layout ---------------- */
+
+
+// allow digits & * # @ ; max 2 chars each slot
+function clampToken(s: string, max = 2): string {
+  return s.replace(/[^0-9*#@]/g, "").slice(0, max);
+}
+type Panel = {
+  tl: string; tr: string;
+  ml: string; mc: string; mr: string;
+  bl: string; br: string;
+};
+function parsePanelString(s: string): Panel {
+  const lines = (s || "").split("\n").map((l) => l.trim());
+  const pick = (line: string, expected: number): string[] => {
+    // New format: explicit positions with '|'
+    if (line.includes("|")) {
+      const parts = line.split("|");
+      // trim to expected, pad with empties
+      const out = parts.slice(0, expected).map((x) => clampToken(x));
+      while (out.length < expected) out.push("");
+      return out;
+    }
+    // Legacy format: whitespace tokens (ambiguous)
+    const toks = line.split(/\s+/).filter(Boolean).map(clampToken);
+    // place left->right; pad empties to keep length
+    const out = toks.slice(0, expected);
+    while (out.length < expected) out.push("");
+    return out;
+  };
+
+  const [tl, tr] = pick(lines[0] ?? "", 2);
+  const [ml, mc, mr] = pick(lines[1] ?? "", 3);
+  const [bl, br] = pick(lines[2] ?? "", 2);
+
+  return { tl, tr, ml, mc, mr, bl, br };
+}
+function panelToString(p: Panel): string {
+  const l1 = `${p.tl}|${p.tr}`;
+  const l2 = `${p.ml}|${p.mc}|${p.mr}`;
+  const l3 = `${p.bl}|${p.br}`;
+  return `${l1}\n${l2}\n${l3}`;
+}
+
+/* ---------------- read view ---------------- */
+function PanelView({ value }: { value: string }) {
+  const p = parsePanelString(value);
+  return (
+    <div className="flex flex-col gap-[2px] md:gap-1 text-[var(--red)]">
+      <div className="flex items-center justify-between">
+        <span>{p.tl}</span>
+        <span>{p.tr}</span>
+      </div>
+      <div className="grid grid-cols-3">
+        <span className="justify-self-start">{p.ml}</span>
+        <span className="justify-self-center">{p.mc}</span>
+        <span className="justify-self-end">{p.mr}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>{p.bl}</span>
+        <span>{p.br}</span>
+      </div>
+    </div>
+  );
+}
+
 /* --------------- page ----------------- */
 export default function ChartPage() {
-  // narrow params safely (avoid string | undefined)
+  // narrow params safely
   const params = useParams<{ year?: string; type?: ChartType }>();
   const yearStr = params.year ?? "0";
   const type = (params.type ?? "day") as ChartType;
@@ -50,7 +119,14 @@ export default function ChartPage() {
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [offline, setOffline] = useState(false); // DB/API unreachable -> fallback
+  const [offline, setOffline] = useState(false);
+
+  // single-active editor (overlay)
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorWI, setEditorWI] = useState<number | null>(null);
+  const [editorDI, setEditorDI] = useState<number | null>(null);
+  const [editorPanel, setEditorPanel] = useState<Panel>({ tl: "", tr: "", ml: "", mc: "", mr: "", bl: "", br: "" });
+  const hasGlobalActive = editorOpen;
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +139,6 @@ export default function ChartPage() {
           headers: { Accept: "application/json" },
           cache: "no-store",
         });
-
         const raw = await res.text();
         let parsed: unknown;
         try {
@@ -71,16 +146,14 @@ export default function ChartPage() {
         } catch {
           throw new Error("Server returned non-JSON (likely HTML error).");
         }
-
         if (!isApiChartResp(parsed)) throw new Error("Unexpected API shape.");
         if (!parsed.ok) throw new Error(parsed.error ?? "API returned error.");
-
         if (!cancelled) setWeeks(parsed.data.weeks);
       } catch (e: unknown) {
         const message =
           e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load API, showing offline view";
         if (!cancelled) {
-          setWeeks(buildYearRows(y)); // Fallback: local rows
+          setWeeks(buildYearRows(y)); // fallback
           setOffline(true);
           setErr(message);
         }
@@ -92,6 +165,66 @@ export default function ChartPage() {
       cancelled = true;
     };
   }, [y, type]);
+
+  function openEditor(wi: number, di: number, initial: string) {
+    if (offline) return;
+    if (hasGlobalActive) return;
+    setEditorWI(wi);
+    setEditorDI(di);
+    setEditorPanel(parsePanelString(initial));
+    setEditorOpen(true);
+  }
+  function closeEditor() {
+    setEditorOpen(false);
+    setEditorWI(null);
+    setEditorDI(null);
+  }
+
+  async function saveEditor() {
+    if (editorWI === null || editorDI === null) return;
+    const value = panelToString(editorPanel);
+    const res = await fetch("/api/chart/cell", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        year: y,
+        type,
+        weekIndex: editorWI,
+        dayIndex: editorDI,
+        value,
+      }),
+    });
+    const data: SaveResp = await res.json();
+    if (!data.ok) {
+      alert(data.error || "Save failed");
+      return;
+    }
+    setWeeks((prev) => {
+      const copy = [...prev];
+      copy[editorWI] = { ...copy[editorWI], days: [...copy[editorWI].days] };
+      copy[editorWI].days[editorDI] = data.value;
+      return copy;
+    });
+    closeEditor();
+  }
+
+  async function deleteEditor() {
+    if (editorWI === null || editorDI === null) return;
+    const url = `/api/chart/cell?year=${y}&type=${type}&weekIndex=${editorWI}&dayIndex=${editorDI}`;
+    const res = await fetch(url, { method: "DELETE" });
+    const data: DelResp = await res.json();
+    if (!data.ok) {
+      alert(data.error || "Delete failed");
+      return;
+    }
+    setWeeks((prev) => {
+      const copy = [...prev];
+      copy[editorWI] = { ...copy[editorWI], days: [...copy[editorWI].days] };
+      copy[editorWI].days[editorDI] = "";
+      return copy;
+    });
+    closeEditor();
+  }
 
   return (
     <>
@@ -116,15 +249,18 @@ export default function ChartPage() {
               DB offline – read-only
             </span>
           )}
+          {hasGlobalActive && (
+            <span className="text-xs md:text-sm bg-white/80 border border-[var(--red)] px-2 py-0.5 rounded">
+              Editing — finish or cancel
+            </span>
+          )}
         </div>
 
         {loading ? (
           <div className="p-4 text-center text-[var(--red)]">Loading…</div>
         ) : (
           <>
-            {err && (
-              <div className="px-3 py-2 text-center text-[var(--red)] text-xs md:text-sm">{err}</div>
-            )}
+            {err && <div className="px-3 py-2 text-center text-[var(--red)] text-xs md:text-sm">{err}</div>}
 
             <table className="w-full text-[var(--red)] table-xs table-fixed">
               <thead>
@@ -143,62 +279,25 @@ export default function ChartPage() {
                 {weeks.map((w, wi) => (
                   <tr key={wi}>
                     <Td className="text-center whitespace-pre-wrap">{w.range}</Td>
-                    {w.days.map((val, di) =>
-                      offline ? (
-                        <Td key={di} className="text-center min-h-[56px] md:min-h-[72px]">
-                          <PanelView value={val} />
-                        </Td>
-                      ) : (
-                        <EditCell
-                          key={di}
-                          initial={val}
-                          onSave={async (next) => {
-                            type SaveResp = { ok: true; value: string } | { ok: false; error?: string };
-                            const res = await fetch("/api/chart/cell", {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                year: y,
-                                type,
-                                weekIndex: wi,
-                                dayIndex: di,
-                                value: next,
-                              }),
-                            });
-                            const data: SaveResp = await res.json();
-
-                            if (!data.ok) {
-                              alert(data.error || "Save failed");
-                              return false;
-                            }
-
-                            setWeeks((prev) => {
-                              const copy = [...prev];
-                              copy[wi] = { ...copy[wi], days: [...copy[wi].days] };
-                              copy[wi].days[di] = data.value; // value is string here
-                              return copy;
-                            });
-                            return true;
-                          }}
-                          onClear={async () => {
-                            type DelResp = { ok: true } | { ok: false; error?: string };
-                            const url = `/api/chart/cell?year=${y}&type=${type}&weekIndex=${wi}&dayIndex=${di}`;
-                            const res = await fetch(url, { method: "DELETE" });
-                            const data: DelResp = await res.json();
-                            if (!data.ok) {
-                              alert(data.error || "Delete failed");
-                              return;
-                            }
-                            setWeeks((prev) => {
-                              const copy = [...prev];
-                              copy[wi] = { ...copy[wi], days: [...copy[wi].days] };
-                              copy[wi].days[di] = "";
-                              return copy;
-                            });
-                          }}
-                        />
-                      )
-                    )}
+                    {w.days.map((val, di) => {
+                      const locked = hasGlobalActive || offline;
+                      return (
+                        <td key={di} className="border-strong border-[var(--red)] px-1 md:px-2 py-2 md:py-3 align-top">
+                          <button
+                            type="button"
+                            onClick={() => openEditor(wi, di, val)}
+                            className={`w-full min-h-[56px] md:min-h-[72px] text-[var(--red)] ${
+                              locked ? "opacity-40 cursor-not-allowed pointer-events-none" : ""
+                            }`}
+                            aria-disabled={locked}
+                            tabIndex={locked ? -1 : 0}
+                            title={locked ? "Finish current edit to edit another cell" : "Click to edit"}
+                          >
+                            <PanelView value={val} />
+                          </button>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -206,6 +305,111 @@ export default function ChartPage() {
           </>
         )}
       </div>
+
+      {/* --------- FULLSCREEN OVERLAY EDITOR --------- */}
+   {editorOpen && editorWI !== null && editorDI !== null && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-3">
+    {/* sheet/card */}
+    <div className="w-full max-w-[520px] bg-[var(--yellow)] border-strong border-[var(--red)] rounded-2xl shadow-xl p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[var(--red)] text-xl sm:text-2xl font-semibold">
+          Edit Cell — Week {editorWI + 1},{" "}
+          {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][editorDI]}
+        </h3>
+        <button
+          onClick={closeEditor}
+          className="text-[var(--red)] border border-[var(--red)] px-3 py-1 rounded"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* big preview */}
+       
+
+      {/* inputs grid large tap targets */}
+      <div className="flex flex-col gap-3">
+        {/* top row (3 equal cols; inputs in col 1 and 3) */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-start-1">
+            <BigInput
+              value={editorPanel.tl}
+              onChange={(v) => setEditorPanel((p) => ({ ...p, tl: clampToken(v) }))}
+            />
+          </div>
+          <div className="col-start-3">
+            <BigInput
+               
+              value={editorPanel.tr}
+              onChange={(v) => setEditorPanel((p) => ({ ...p, tr: clampToken(v) }))}
+            />
+          </div>
+        </div>
+
+        {/* middle row (3 equal cols; inputs in 1/2/3) */}
+        <div className="grid grid-cols-3 gap-3">
+          <BigInput
+             
+            value={editorPanel.ml}
+            onChange={(v) => setEditorPanel((p) => ({ ...p, ml: clampToken(v) }))}
+          />
+          <BigInput
+            value={editorPanel.mc}
+            onChange={(v) => setEditorPanel((p) => ({ ...p, mc: clampToken(v) }))}
+          />
+          <BigInput
+            value={editorPanel.mr}
+            onChange={(v) => setEditorPanel((p) => ({ ...p, mr: clampToken(v) }))}
+          />
+        </div>
+
+        {/* bottom row (3 equal cols; inputs in col 1 and 3) */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-start-1">
+            <BigInput
+               
+              value={editorPanel.bl}
+              onChange={(v) => setEditorPanel((p) => ({ ...p, bl: clampToken(v) }))}
+            />
+          </div>
+          <div className="col-start-3">
+            <BigInput
+               
+              value={editorPanel.br}
+              onChange={(v) => setEditorPanel((p) => ({ ...p, br: clampToken(v) }))}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* actions: all equal width */}
+      <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <button
+          className="w-full bg-[var(--yellow)] border border-[var(--red)] text-[var(--red)] py-2 sm:py-3 rounded"
+          onClick={saveEditor}
+        >
+          Save
+        </button>
+        <button
+          className="w-full bg-white border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
+          onClick={closeEditor}
+        >
+          Cancel
+        </button>
+        <button
+          className="w-full bg-red-100 border border-[var(--red)] text-[var(--red)] rounded py-2 sm:py-3"
+          onClick={() => {
+            if (confirm("Clear this cell?")) deleteEditor();
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </>
   );
 }
@@ -223,221 +427,52 @@ function Td({ children = null, className = "" }: { children?: React.ReactNode; c
     </td>
   );
 }
-
-/* ---------------- panel layout ---------------- */
-type Panel = {
-  tl: string; tr: string;
-  ml: string; mc: string; mr: string;
-  bl: string; br: string;
-};
-
-function clampDigits(s: string, max = 2): string {
-  return s.replace(/\D+/g, "").slice(0, max);
-}
-function parsePanelString(s: string): Panel {
-  const lines = (s || "").split("\n").map((l) => l.trim()).filter(Boolean);
-  const p: Panel = { tl: "", tr: "", ml: "", mc: "", mr: "", bl: "", br: "" };
-  if (lines[0]) {
-    const [tl, tr] = lines[0].split(/\s+/);
-    p.tl = clampDigits(tl ?? "");
-    p.tr = clampDigits(tr ?? "");
-  }
-  if (lines[1]) {
-    const [ml, mc, mr] = lines[1].split(/\s+/);
-    p.ml = clampDigits(ml ?? "");
-    p.mc = clampDigits(mc ?? "");
-    p.mr = clampDigits(mr ?? "");
-  }
-  if (lines[2]) {
-    const [bl, br] = lines[2].split(/\s+/);
-    p.bl = clampDigits(bl ?? "");
-    p.br = clampDigits(br ?? "");
-  }
-  return p;
-}
-function panelToString(p: Panel): string {
-  const l1 = [p.tl, p.tr].filter((v) => v !== "").join(" ");
-  const l2 = [p.ml, p.mc, p.mr].filter((v) => v !== "").join(" ");
-  const l3 = [p.bl, p.br].filter((v) => v !== "").join(" ");
-  return `${l1}\n${l2}\n${l3}`.trimEnd();
-}
-
-/* read view for the panel (matches screenshot) */
-function PanelView({ value }: { value: string }) {
-  const p = parsePanelString(value);
-  return (
-    <div className="flex flex-col gap-[2px] md:gap-1 text-[var(--red)]">
-      <div className="flex items-center justify-between">
-        <span>{p.tl}</span>
-        <span>{p.tr}</span>
-      </div>
-      <div className="grid grid-cols-3">
-        <span className="justify-self-start">{p.ml}</span>
-        <span className="justify-self-center">{p.mc}</span>
-        <span className="justify-self-end">{p.mr}</span>
-      </div>
-      <div className="flex items-center justify-between">
-        <span>{p.bl}</span>
-        <span>{p.br}</span>
-      </div>
-    </div>
-  );
-}
-
-/* -------------- editable cell (digits-only 7 slots) -------------- */
-function EditCell({
-  initial = "",
-  onSave,
-  onClear,
+function BigInput({
+  value,
+  onChange,
 }: {
-  initial?: string;
-  onSave: (v: string) => Promise<boolean>;
-  onClear: () => Promise<void>;
+  
+  value: string;
+  onChange: (v: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [panel, setPanel] = useState<Panel>(() => parsePanelString(initial));
-
-  useEffect(() => {
-    setPanel(parsePanelString(initial));
-  }, [initial]);
-
-  function setField<K extends keyof Panel>(key: K) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setPanel((prev) => ({ ...prev, [key]: clampDigits(e.target.value, 2) }));
-    };
-  }
-
-  async function handleSave() {
-    const str = panelToString(panel);
-    const ok = await onSave(str);
-    if (ok) setEditing(false);
-  }
-
   return (
-    <td className="border-strong border-[var(--red)] px-1 md:px-2 py-2 md:py-3 align-top">
-      {!editing ? (
-        <button
-          type="button"
-          className="w-full min-h-[56px] md:min-h-[72px] text-[var(--red)]"
-          onClick={() => setEditing(true)}
-          title="Click to edit"
-        >
-          <PanelView value={initial} />
-        </button>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {/* top row */}
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              value={panel.tl}
-              onChange={setField("tl")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="TL"
-            />
-            <input
-              value={panel.tr}
-              onChange={setField("tr")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="TR"
-            />
-          </div>
-          {/* middle row */}
-          <div className="grid grid-cols-3 gap-2">
-            <input
-              value={panel.ml}
-              onChange={setField("ml")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="ML"
-            />
-            <input
-              value={panel.mc}
-              onChange={setField("mc")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="MC"
-            />
-            <input
-              value={panel.mr}
-              onChange={setField("mr")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="MR"
-            />
-          </div>
-          {/* bottom row */}
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              value={panel.bl}
-              onChange={setField("bl")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="BL"
-            />
-            <input
-              value={panel.br}
-              onChange={setField("br")}
-              inputMode="numeric"
-              className="text-center border border-[var(--red)] bg-yellow-300/30 p-1"
-              placeholder="BR"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button className="flex-1 bg-[var(--yellow)] border border-[var(--red)] text-[var(--red)] py-1" onClick={handleSave}>
-              Save
-            </button>
-            <button
-              className="px-3 bg-white border border-[var(--red)] text-[var(--red)]"
-              onClick={() => {
-                setPanel(parsePanelString(initial));
-                setEditing(false);
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-3 bg-red-100 border border-[var(--red)] text-[var(--red)]"
-              onClick={async () => {
-                if (!confirm("Clear this cell?")) return;
-                await onClear();
-                setEditing(false);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-    </td>
+    <label className="flex flex-col gap-1 w-full min-w-0">
+      
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        inputMode="numeric"
+        className="w-full min-w-0 text-center text-2xl sm:text-3xl tracking-wider
+                   border border-[var(--red)] bg-yellow-300/30 rounded
+                   h-14 sm:h-16 px-3"
+        placeholder=".."
+      />
+    </label>
   );
 }
+
+
 
 /* --------- local fallback generator: full year, week rows, blank cells --------- */
-function buildYearRows(year: number): Week[] {
-  const rows: Week[] = [];
-  let current = new Date(year, 0, 1);
-  const end = new Date(year, 11, 31);
+// in app/chart/[year]/[type]/page.tsx
+function buildYearRows(year: number): { range: string; days: string[] }[] {
+  const rows: { range: string; days: string[] }[] = [];
 
-  while (current <= end) {
-    const weekStart = new Date(current);
-    const weekDays: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      weekDays.push("");
-      current = new Date(current);
-      current.setDate(current.getDate() + 1);
-      if (current > end && i < 6) {
-        for (let j = i + 1; j < 7; j++) weekDays.push("");
-        break;
-      }
-    }
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    const capEnd = weekEnd > end ? end : weekEnd;
-    const range = `${fmt(weekStart)} to ${fmt(capEnd)}`;
-    rows.push({ range, days: weekDays });
+  const dUTC = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d));
+  const addDaysUTC = (dt: Date, days: number) => new Date(dt.getTime() + days * 86_400_000);
+  const fmtUTC = (dt: Date) => dt.toISOString().slice(0, 10);
+
+  let start = dUTC(year, 0, 1);
+  const yearEnd = dUTC(year, 11, 31);
+
+  while (start <= yearEnd) {
+    const dow = start.getUTCDay(); // 0=Sun
+    const daysToSunday = dow === 0 ? 0 : 7 - dow;
+    let end = addDaysUTC(start, daysToSunday);
+    if (end > yearEnd) end = yearEnd;
+
+    rows.push({ range: `${fmtUTC(start)} to ${fmtUTC(end)}`, days: ["","","","","","",""] });
+    start = addDaysUTC(end, 1);
   }
   return rows;
 }
