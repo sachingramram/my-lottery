@@ -58,11 +58,11 @@ export default function Home() {
   if (!daily || !draft) {
     return (
       <>
-        <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-4 md:py-8">
-          <h1 className="text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
-          <p className="text-lg md:text-3xl mt-1">YOUR LUCK LOTTERY NUMBER</p>
+        <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
+          <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
+          <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
         </header>
-        <div className="p-4 text-[var(--red)]">Loading…</div>
+        <div className="p-3 sm:p-4 text-[var(--red)] text-xs sm:text-sm">Loading…</div>
       </>
     );
   }
@@ -110,13 +110,13 @@ export default function Home() {
 
   return (
     <>
-      <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-4 md:py-8">
-        <h1 className="text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
-        <p className="text-lg md:text-3xl mt-1">YOUR LUCK LOTTERY NUMBER</p>
+      <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
+        <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
       </header>
 
-      {/* 3 columns on ALL screens; compact gaps on small */}
-      <section className="mt-6 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+      {/* 3 columns on ALL screens; tighter gaps and tiny fonts on mobile */}
+      <section className="mt-4 sm:mt-6 grid grid-cols-3 gap-1 sm:gap-2 md:gap-4">
         {/* Jai Metro Day */}
         <Mini
           title="Jai Metro Day"
@@ -146,11 +146,11 @@ export default function Home() {
 
         {/* Center image */}
         <div className="flex justify-center">
-          <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-1.5 sm:p-2">
+          <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
             <img
               src="/laxmima.jpg"
               alt="idol"
-              className="w-full max-w-[110px] sm:max-w-[160px] md:max-w-[320px] h-auto object-cover"
+              className="w-full max-w-[72px] xs:max-w-[90px] sm:max-w-[150px] md:max-w-[320px] h-auto object-cover"
             />
           </figure>
         </div>
@@ -183,19 +183,19 @@ export default function Home() {
         />
       </section>
 
-      <nav className="mt-8 space-y-3 md:space-y-6">
+      <nav className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
         {years.map((y) =>
           TYPES.map((t) => (
             <Link
               key={`${y}-${t}`}
               href={`/chart/${y}/${t}`}
-              className="block text-center bg-[var(--yellow)] text-[var(--red)] text-xl md:text-3xl border-strong border-[var(--red)] py-4 md:py-6 hover:opacity-90"
+              className="block text-center bg-[var(--yellow)] text-[var(--red)] text-sm sm:text-xl md:text-3xl border-strong border-[var(--red)] py-2.5 sm:py-4 md:py-6 hover:opacity-90"
             >
               {`Jai Metro ${t[0].toUpperCase() + t.slice(1)} Panel Chart ${y}`}
             </Link>
           ))
         )}
-        <Link href="/admin" className="block text-center underline text-yellow-200">
+        <Link href="/admin" className="block text-center underline text-[10px] sm:text-sm text-yellow-200">
           Admin Login
         </Link>
       </nav>
@@ -203,7 +203,7 @@ export default function Home() {
   );
 }
 
-/* ---------------- small building blocks (compact on mobile) ---------------- */
+/* ---------------- small building blocks (extra-compact + aligned grid) ---------------- */
 function Mini({
   title,
   rows,
@@ -212,17 +212,19 @@ function Mini({
   rows: { number: React.ReactNode; date: string; time: string }[];
 }) {
   return (
-    <div className="bg-[var(--yellow)] border-strong border-[var(--red)]">
-      <div className="text-center py-1.5 sm:py-2 md:py-3 text-xs sm:text-base md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
+    <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+      <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
         {title}
       </div>
-      <table className="w-full text-[var(--red)] text-[10px] sm:text-xs md:text-lg table-fixed">
+
+      {/* Perfect alignment: remove table outer border, use box-border + collapse, keep borders on cells */}
+      <table className="w-full text-[var(--red)] text-[9px] sm:text-xs md:text-lg box-border border-collapse">
         <thead>
           <tr className="text-center">
             {["Number", "Date", "Time"].map((h, i) => (
               <th
                 key={i}
-                className="py-1.5 sm:py-2 md:py-3 border-b-strong border-[var(--red)] border-r-strong last:border-r-0"
+                className="py-1 sm:py-1.5 md:py-3 px-1 sm:px-2 border border-[var(--red)]"
               >
                 {h}
               </th>
@@ -250,13 +252,13 @@ function Mini({
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td className="py-2 sm:py-3 md:py-5 border-b-strong border-[var(--red)] border-r-strong last:border-r-0 px-1 sm:px-2">
+    <td className="py-1 sm:py-2 md:py-5 px-1 sm:px-2 border border-[var(--red)]">
       {children}
     </td>
   );
 }
 
-/* --------- NumberCell: square input; Save hidden unless dirty --------- */
+/* --------- NumberCell: smallest square input; micro buttons below; save shown only when dirty --------- */
 function NumberCell({
   saved,
   value,
@@ -281,36 +283,37 @@ function NumberCell({
   const dirty = value !== saved;
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-0.5">
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 text-center text-base sm:text-lg md:text-xl
+        className="w-9 h-9 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-20 md:h-20
+                   text-center text-[10px] xs:text-[11px] sm:text-sm md:text-xl
                    border border-[var(--red)] bg-yellow-300/30 text-[var(--red)]"
         placeholder=""
       />
-      <div className="grid grid-cols-2 gap-0.5 sm:gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {/* Show Save only when dirty */}
         {dirty ? (
           <button
             onClick={onSave}
             disabled={saving}
-            className="px-1 py-0.5 text-[10px] md:text-xs border border-[var(--red)]
-                       bg-[var(--yellow)] text-[var(--red)]"
+            className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
+                       bg-[var(--yellow)] text-[var(--red)] leading-none"
           >
             {saving ? "…" : "Save"}
           </button>
         ) : (
-          <span className="px-1 py-0.5 text-[10px] md:text-xs opacity-0 select-none">.</span>
+          <span className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs opacity-0 select-none leading-none">.</span>
         )}
         <button
           onClick={onDelete}
           disabled={saving}
-          className="px-1 py-0.5 text-[10px] md:text-xs
-                    "
+          className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
+                     bg-white text-[var(--red)] leading-none"
           title="Clear"
         >
-          🗑️
+          Del
         </button>
       </div>
     </div>
