@@ -256,6 +256,30 @@ export default function ChartPage() {
 
   return (
     <>
+    <section className="mt-2 md:mt-3">
+  <div className="mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
+    <video
+      src="/video5.mp4"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      onEnded={(e) => {
+        const v = e.currentTarget;
+        v.currentTime = 0;           // jump back instantly
+        void v.play();               // resume immediately
+      }}
+      onCanPlay={(e) => {
+        const v = e.currentTarget;
+        if (v.paused) void v.play(); // ensure autoplay if browser hesitates
+      }}
+      className="block w-full object-cover
+                 max-h-[180px] sm:max-h-[220px] md:max-h-[260px]"
+    />
+  </div>
+</section>
+
       {/* Back + ribbon */}
       <div className="mb-3 md:mb-6 flex items-center gap-2 md:gap-3">
         <Link
