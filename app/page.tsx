@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 /* ---------------- constants you already had ---------------- */
-const START_YEAR = 1996;
+const START_YEAR = 2023;
 const END_YEAR = 2025;
 const TYPES = ["night", "day"] as const;
 const years = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => END_YEAR - i);
@@ -107,9 +107,37 @@ export default function Home() {
     { saved: daily.night[0], value: draft.night[0], date: dateLabel, time: NIGHT_TIMES[0], slot: "night1" as const, idx: 0 },
     { saved: daily.night[1], value: draft.night[1], date: dateLabel, time: NIGHT_TIMES[1], slot: "night2" as const, idx: 1 },
   ];
+  
 
   return (
     <>
+    {/* Top autoplay video */}
+{/* Top autoplay video */}
+<section className="mt-2 md:mt-3">
+  <div className="mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
+    <video
+      src="/video3.mp4"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      onEnded={(e) => {
+        const v = e.currentTarget;
+        v.currentTime = 0;           // jump back instantly
+        void v.play();               // resume immediately
+      }}
+      onCanPlay={(e) => {
+        const v = e.currentTarget;
+        if (v.paused) void v.play(); // ensure autoplay if browser hesitates
+      }}
+      className="block w-full object-cover
+                 max-h-[180px] sm:max-h-[220px] md:max-h-[260px]"
+    />
+  </div>
+</section>
+
+
       <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
         <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
         <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
@@ -146,14 +174,14 @@ export default function Home() {
 
         {/* Center image */}
         <div className="flex justify-center">
-          <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
-            <img
-              src="/laxmima.jpg"
-              alt="idol"
-              className="w-full max-w-[72px] xs:max-w-[90px] sm:max-w-[150px] md:max-w-[320px] h-auto object-cover"
-            />
-          </figure>
-        </div>
+  <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-0.5 sm:p-1 md:p-1.5">
+    <img
+      src="/kalash.jfif"
+      alt="idol"
+      className="w-full max-w-[64px] xs:max-w-[84px] sm:max-w-[130px] md:max-w-[200px] h-auto object-cover"
+    />
+  </figure>
+</div>
 
         {/* Jai Metro Night (2 rows) */}
         <Mini
