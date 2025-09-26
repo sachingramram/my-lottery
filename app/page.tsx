@@ -116,7 +116,7 @@ export default function Home() {
 <section className="mt-2 md:mt-3">
   <div className="mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
     <video
-      src="/video3.mp4"
+      src="/video5.mp4"
       autoPlay
       muted
       loop
