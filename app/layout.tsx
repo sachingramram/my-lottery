@@ -3,6 +3,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "JAI METRO – Your Luck Lottery Number",
+  icons: {
+    icon: "/icon.jpg"
+  },
   description: "Jai Metro style site with editable charts",
 };
 
