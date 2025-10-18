@@ -70,8 +70,8 @@ export default function Home() {
   const dateLabel = toDDMMYYYY(daily.date);
 
   // static times (kept exactly as requested)
-  const DAY_TIMES: [string, string] = ["12:30:00 PM", "01:30:00 PM"];
-  const NIGHT_TIMES: [string, string] = ["08:01:00 PM", "10:30:00 PM"];
+  const DAY_TIMES: [string, string] = ["11:00:00 AM", "12:00:00 PM"];
+  const NIGHT_TIMES: [string, string] = ["06:30:00 PM", "07:30:00 PM"];
 
   // helpers for save/delete
   async function saveSlot(slot: "day1" | "day2" | "night1" | "night2", value: string) {
@@ -176,7 +176,7 @@ export default function Home() {
         <div className="flex justify-center">
   <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-0.5 sm:p-1 md:p-1.5">
     <img
-      src="/kalash.jfif"
+      src="/kalash.jpeg"
       alt="idol"
       className="w-full max-w-[64px] xs:max-w-[84px] sm:max-w-[130px] md:max-w-[200px] h-auto object-cover"
     />

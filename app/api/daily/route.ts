@@ -26,7 +26,7 @@ function istDisplayDateYYYYMMDD(): string {
   const ist = nowIST();
   const hours = ist.getUTCHours(); // we've shifted the epoch, so UTC-hours == IST-hours
   const base = new Date(ist);
-  if (hours < 12) base.setUTCDate(base.getUTCDate() - 1); // before noon → show yesterday
+  if (hours < 10) base.setUTCDate(base.getUTCDate() - 1); // before noon → show yesterday
   const y = base.getUTCFullYear();
   const m = String(base.getUTCMonth() + 1).padStart(2, "0");
   const d = String(base.getUTCDate()).padStart(2, "0");
@@ -66,8 +66,8 @@ export async function GET(req: Request) {
           isAdmin,
           // static slots to render labels
           slots: {
-            day: ["12:30:00 PM", "01:30:00 PM"],
-            night: ["08:01:00 PM", "10:30:00 PM"],
+            day: ["11:00:00 AM", "12:00:00 PM"],
+            night: ["06:30:00 PM", "07:30:00 PM"],
           },
         },
       },
