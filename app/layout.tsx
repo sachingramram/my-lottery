@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "JAI METRO – Your Luck Lottery Number",
+  title: "Baba – Your Luck Lottery Number",
   icons: {
     icon: "/icon.jpg"
   },
-  description: "Jai Metro style site with editable charts",
+  description: "Baba style site with editable charts",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

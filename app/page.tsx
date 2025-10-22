@@ -59,7 +59,7 @@ export default function Home() {
     return (
       <>
         <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
-          <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">BABA</h1>
           <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
         </header>
         <div className="p-3 sm:p-4 text-[var(--red)] text-xs sm:text-sm">Loading…</div>
@@ -139,15 +139,15 @@ export default function Home() {
 
 
       <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
-        <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">JAI METRO</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">BABA</h1>
         <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
       </header>
 
       {/* 3 columns on ALL screens; tighter gaps and tiny fonts on mobile */}
       <section className="mt-4 sm:mt-6 grid grid-cols-3 gap-1 sm:gap-2 md:gap-4">
-        {/* Jai Metro Day */}
+        {/* Baba Day */}
         <Mini
-          title="Jai Metro Day"
+          title="Baba Day"
           rows={dayRows.map((r) => ({
             number: (
               <NumberCell
@@ -173,19 +173,21 @@ export default function Home() {
         />
 
         {/* Center image */}
-        <div className="flex justify-center">
-  <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-0.5 sm:p-1 md:p-1.5">
+       <div className="flex justify-center">
+  <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-0.5 sm:p-1 md:p-1.5 
+                     flex items-center justify-center h-[180px] sm:h-[190px] md:h-[280px]">
     <img
       src="/kalash.jpeg"
       alt="idol"
-      className="w-full max-w-[64px] xs:max-w-[84px] sm:max-w-[130px] md:max-w-[200px] h-auto object-cover"
+      className="h-full w-auto max-h-full object-contain"
     />
   </figure>
 </div>
 
-        {/* Jai Metro Night (2 rows) */}
+
+        {/* Baba Night (2 rows) */}
         <Mini
-          title="Jai Metro Night"
+          title="Baba Night"
           rows={nightRows.map((r) => ({
             number: (
               <NumberCell
@@ -219,7 +221,7 @@ export default function Home() {
               href={`/chart/${y}/${t}`}
               className="block text-center bg-[var(--yellow)] text-[var(--red)] text-sm sm:text-xl md:text-3xl border-strong border-[var(--red)] py-2.5 sm:py-4 md:py-6 hover:opacity-90"
             >
-              {`Jai Metro ${t[0].toUpperCase() + t.slice(1)} Panel Chart ${y}`}
+              {`Baba ${t[0].toUpperCase() + t.slice(1)} Panel Chart ${y}`}
             </Link>
           ))
         )}

@@ -111,7 +111,7 @@ export default function ChartPage() {
   const type = (params.type ?? "day") as ChartType;
   const y = Number(yearStr);
 
-  const title = (type === "day" ? "Jai Metro Day Chart " : "Jai Metro Night Chart ") + y;
+  const title = (type === "day" ? "Baba Day Chart " : "Baba Night Chart ") + y;
 
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [loading, setLoading] = useState(true);
@@ -289,7 +289,7 @@ export default function ChartPage() {
           ⬅ BACK
         </Link>
         <div className="flex-1 text-center bg-[var(--yellow)] text-[var(--red)] text-lg md:text-3xl border-strong border-[var(--red)] py-1.5 md:py-2">
-          Jai Metro Today Lottery Number
+          Baba Today Lottery Number
         </div>
       </div>
 
