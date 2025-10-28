@@ -26,7 +26,7 @@ function istDisplayDateYYYYMMDD(): string {
   const ist = nowIST();
   const hours = ist.getUTCHours(); // we've shifted the epoch, so UTC-hours == IST-hours
   const base = new Date(ist);
-  if (hours < 10) base.setUTCDate(base.getUTCDate() - 1); // before noon → show yesterday
+  if (hours < 1) base.setUTCDate(base.getUTCDate() - 1); // before noon → show yesterday
   const y = base.getUTCFullYear();
   const m = String(base.getUTCMonth() + 1).padStart(2, "0");
   const d = String(base.getUTCDate()).padStart(2, "0");

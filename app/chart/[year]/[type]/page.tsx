@@ -256,8 +256,21 @@ export default function ChartPage() {
 
   return (
     <>
-    <section className="mt-2 md:mt-3">
-  <div className="mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2">
+    <section className="relative mt-2 md:mt-3">
+  {/* Video container */}
+  <div className="relative mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2 overflow-hidden">
+    
+    {/* Overlay text */}
+    <div className="absolute inset-0 flex justify-between items-start px-4 sm:px-8 pt-2 sm:pt-3 z-10 pointer-events-none">
+      <span className="text-[var(--red)] text-3xl sm:text-5xl md:text-6xl font-bold drop-shadow-[1px_1px_1px_rgba(0,0,0,0.3)]">
+        माँ
+      </span>
+      <span className="text-[var(--red)] text-3xl sm:text-5xl md:text-6xl font-bold drop-shadow-[1px_1px_1px_rgba(0,0,0,0.3)]">
+        श्री
+      </span>
+    </div>
+
+    {/* Video itself */}
     <video
       src="/video5.mp4"
       autoPlay
@@ -267,18 +280,18 @@ export default function ChartPage() {
       preload="auto"
       onEnded={(e) => {
         const v = e.currentTarget;
-        v.currentTime = 0;           // jump back instantly
-        void v.play();               // resume immediately
+        v.currentTime = 0;
+        void v.play();
       }}
       onCanPlay={(e) => {
         const v = e.currentTarget;
-        if (v.paused) void v.play(); // ensure autoplay if browser hesitates
+        if (v.paused) void v.play();
       }}
-      className="block w-full object-cover
-                 max-h-[180px] sm:max-h-[220px] md:max-h-[260px]"
+      className="block w-full object-cover max-h-[180px] sm:max-h-[220px] md:max-h-[260px]"
     />
   </div>
 </section>
+
 
       {/* Back + ribbon */}
       <div className="mb-3 md:mb-6 flex items-center gap-2 md:gap-3">
