@@ -257,38 +257,50 @@ export default function ChartPage() {
   return (
     <>
     <section className="relative mt-2 md:mt-3">
-  {/* Video container */}
-  <div className="relative mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] p-1 sm:p-1.5 md:p-2 overflow-hidden">
-    
-    {/* Overlay text */}
-    <div className="absolute inset-0 flex justify-between items-start px-4 sm:px-8 pt-2 sm:pt-3 z-10 pointer-events-none">
-      <span className="text-[var(--red)] text-3xl sm:text-5xl md:text-6xl font-bold drop-shadow-[1px_1px_1px_rgba(0,0,0,0.3)]">
+  {/* Outer bordered container */}
+  <div className="relative mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] 
+                  p-2 sm:p-3 md:p-4 flex flex-col items-center justify-start rounded-lg
+                  max-w-full">
+
+    {/* Maa & Shree text (top row) */}
+    <div className="w-full relative mb-2 sm:mb-3">
+      {/* माँ - Left */}
+      <span className="absolute left-6 sm:left-10 text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
         माँ
       </span>
-      <span className="text-[var(--red)] text-3xl sm:text-5xl md:text-6xl font-bold drop-shadow-[1px_1px_1px_rgba(0,0,0,0.3)]">
-        श्री
-      </span>
+
+      {/* श्री - Center */}
+      <div className="text-center">
+        <span className="text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
+          श्री
+        </span>
+      </div>
     </div>
 
-    {/* Video itself */}
-    <video
-      src="/video5.mp4"
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="auto"
-      onEnded={(e) => {
-        const v = e.currentTarget;
-        v.currentTime = 0;
-        void v.play();
-      }}
-      onCanPlay={(e) => {
-        const v = e.currentTarget;
-        if (v.paused) void v.play();
-      }}
-      className="block w-full object-cover max-h-[180px] sm:max-h-[220px] md:max-h-[260px]"
-    />
+    {/* Inner video box */}
+    <div className="border-strong border-[var(--red)] bg-[var(--yellow)] 
+                    p-1 sm:p-1.5 md:p-2 rounded-md
+                    w-[85%] sm:w-[80%] md:w-[70%] flex justify-center items-center">
+      <video
+        src="/video5.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        onEnded={(e) => {
+          const v = e.currentTarget;
+          v.currentTime = 0;
+          void v.play();
+        }}
+        onCanPlay={(e) => {
+          const v = e.currentTarget;
+          if (v.paused) void v.play();
+        }}
+        className="block w-full h-auto object-cover rounded-sm
+                   max-h-[120px] sm:max-h-[160px] md:max-h-[180px]"
+      />
+    </div>
   </div>
 </section>
 
