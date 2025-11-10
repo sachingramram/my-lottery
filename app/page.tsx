@@ -170,76 +170,90 @@ export default function Home() {
         <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">बाबा</h1>
         <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
       </header>
+{/* 3 columns layout; columns stretch to same height and center image follows */}
+<section
+  className="mt-4 sm:mt-6 grid grid-cols-[1.3fr_0.7fr_1.3fr] gap-1 sm:gap-2 md:gap-4 items-stretch"
+>
+  {/* Baba Day - make this container stretch */}
+  <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Mini
+        title="Baba Day"
+        rows={dayRows.map((r) => ({
+          number: (
+            <NumberCell
+              saved={r.saved}
+              value={r.value}
+              editable={daily.isAdmin}
+              saving={busy === r.slot}
+              onChange={(v) => {
+                setDraft((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev, day: [...prev.day] as [string, string] };
+                  next.day[r.idx] = v;
+                  return next;
+                });
+              }}
+              onSave={() => saveSlot(r.slot, draft.day[r.idx])}
+              onDelete={() => deleteSlot(r.slot)}
+            />
+          ),
+          date: r.date,
+          time: r.time,
+        }))}
+      />
+    </div>
+  </div>
 
-      {/* 3 columns on ALL screens; tighter gaps and tiny fonts on mobile */}
-      <section className="mt-4 sm:mt-6 grid grid-cols-3 gap-1 sm:gap-2 md:gap-4">
-        {/* Baba Day */}
-        <Mini
-          title="Baba Day"
-          rows={dayRows.map((r) => ({
-            number: (
-              <NumberCell
-                saved={r.saved}
-                value={r.value}
-                editable={daily.isAdmin}
-                saving={busy === r.slot}
-                onChange={(v) => {
-                  setDraft((prev) => {
-                    if (!prev) return prev;
-                    const next = { ...prev, day: [...prev.day] as [string, string] };
-                    next.day[r.idx] = v;
-                    return next;
-                  });
-                }}
-                onSave={() => saveSlot(r.slot, draft.day[r.idx])}
-                onDelete={() => deleteSlot(r.slot)}
-              />
-            ),
-            date: r.date,
-            time: r.time,
-          }))}
-        />
+  {/* Center image - make it fill the full column height */}
+  <div className="flex justify-center h-full">
+    <figure
+      className="border-strong border-[var(--red)] bg-[var(--yellow)]
+                 p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
+                 w-[80%] sm:w-[70%] md:w-[55%] h-full overflow-hidden"
+    >
+      <img
+        src="/kalash.jpeg"
+        alt="idol"
+        className="w-full h-full object-cover"
+      />
+    </figure>
+  </div>
 
-        {/* Center image */}
-       <div className="flex justify-center">
-  <figure className="border-strong border-[var(--red)] bg-[var(--yellow)] p-0.5 sm:p-1 md:p-1.5 
-                     flex items-center justify-center h-[180px] sm:h-[190px] md:h-[280px]">
-    <img
-      src="/kalash.jpeg"
-      alt="idol"
-      className="h-full w-auto max-h-full object-contain"
-    />
-  </figure>
-</div>
+  {/* Baba Night - also stretch */}
+  <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Mini
+        title="Baba Night"
+        rows={nightRows.map((r) => ({
+          number: (
+            <NumberCell
+              saved={r.saved}
+              value={r.value}
+              editable={daily.isAdmin}
+              saving={busy === r.slot}
+              onChange={(v) => {
+                setDraft((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev, night: [...prev.night] as [string, string] };
+                  next.night[r.idx] = v;
+                  return next;
+                });
+              }}
+              onSave={() => saveSlot(r.slot, draft.night[r.idx])}
+              onDelete={() => deleteSlot(r.slot)}
+            />
+          ),
+          date: r.date,
+          time: r.time,
+        }))}
+      />
+    </div>
+  </div>
+</section>
 
 
-        {/* Baba Night (2 rows) */}
-        <Mini
-          title="Baba Night"
-          rows={nightRows.map((r) => ({
-            number: (
-              <NumberCell
-                saved={r.saved}
-                value={r.value}
-                editable={daily.isAdmin}
-                saving={busy === r.slot}
-                onChange={(v) => {
-                  setDraft((prev) => {
-                    if (!prev) return prev;
-                    const next = { ...prev, night: [...prev.night] as [string, string] };
-                    next.night[r.idx] = v;
-                    return next;
-                  });
-                }}
-                onSave={() => saveSlot(r.slot, draft.night[r.idx])}
-                onDelete={() => deleteSlot(r.slot)}
-              />
-            ),
-            date: r.date,
-            time: r.time,
-          }))}
-        />
-      </section>
+
 
       <nav className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
         {years.map((y) =>
