@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* brand tokens */
-:root{ --green:#0b6b17; --yellow:#ffff00; --red:#ff0000; }
+:root{ --green:#833AB4; --yellow:#FFE5B4; --red:#ff0000; }
 html,body{ margin:0; padding:0; background:var(--green); color:#1a1a1a; overflow-x:hidden; }
 
 /* borders scale up on md+ so it still looks chunky */
