@@ -255,8 +255,23 @@ export default function Home() {
   </div>
 </section>
 
+{/*Baba Day Result*/}
+<section
+  className="mt-4 sm:mt-6 grid grid-cols-1 gap-1 sm:gap-2 md:gap-4 items-stretch"
+>
+<div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Tini title="Baba Day Result" type="day" isAdmin={daily.isAdmin} />
+    </div>
+  </div>
 
-
+  {/* Baba Night Result*/ }
+<div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Tini title="Baba Night Result" type="night" isAdmin={daily.isAdmin} />
+    </div>
+  </div>
+  </section>
 
       <nav className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
         {years.map((y) =>
@@ -278,13 +293,173 @@ export default function Home() {
   );
 }
 
+ 
+
+/* ---------- helpers ---------- */
+function onlyDigits(v: string, max: number) {
+  return v.replace(/\D/g, "").slice(0, max);
+}
+
+function splitDraft(draft: string): [string, string, string] {
+  const parts = draft.split(" - ");
+  return [
+    parts[0] ?? "",
+    parts[1] ?? "",
+    parts[2] ?? "",
+  ];
+}
+
+/* ---------- component ---------- */
+export function Tini({
+  title,
+  type,
+  isAdmin,
+}: {
+  title: string;
+  type: "day" | "night";
+  isAdmin: boolean;
+}) {
+  const [value, setValue] = useState<string>("");     // saved value
+  const [draft, setDraft] = useState<string>("");     // editable draft
+  const [editing, setEditing] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
+
+  /* load saved value */
+  useEffect(() => {
+    fetch(`/api/result?type=${type}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { ok: boolean; value?: string }) => {
+        if (d.ok) {
+          setValue(d.value ?? "");
+          setDraft(d.value ?? "");
+        }
+      });
+  }, [type]);
+
+  async function save() {
+    const [a, b, c] = splitDraft(draft);
+
+    // strict 3-2-3 validation
+    if (a.length !== 3 || b.length !== 2 || c.length !== 3) {
+      alert("Format must be 3-2-3 digits");
+      return;
+    }
+
+    setSaving(true);
+
+    const res = await fetch("/api/result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        value: `${a} - ${b} - ${c}`,
+      }),
+    }).then((r) => r.json());
+
+    if (res.ok) {
+      setValue(res.value);
+      setEditing(false);
+    } else {
+      alert(res.error || "Save failed");
+    }
+
+    setSaving(false);
+  }
+
+  const [d1, d2, d3] = splitDraft(draft);
+
+  return (
+    <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+      {/* title */}
+      <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
+        {title}
+      </div>
+
+      {/* content */}
+      <div className="flex items-center justify-center gap-2 py-2 sm:py-3">
+        {!editing ? (
+          <>
+            <span className="text-[var(--red)] text-sm sm:text-lg md:text-xl font-semibold tracking-wider">
+              {value || "_ _ _ - _ _ - _ _ _"}
+            </span>
+
+            {isAdmin && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-[8px] sm:text-xs border border-[var(--red)] px-1.5 py-0.5 text-[var(--red)]"
+              >
+                Edit
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {/* 3 digits */}
+            <input
+              value={d1}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 3);
+                setDraft(`${v} - ${d2} - ${d3}`);
+              }}
+              inputMode="numeric"
+              placeholder="___"
+              className="w-10 sm:w-12 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
+
+            <span className="text-[var(--red)] font-bold">-</span>
+
+            {/* 2 digits */}
+            <input
+              value={d2}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 2);
+                setDraft(`${d1} - ${v} - ${d3}`);
+              }}
+              inputMode="numeric"
+              placeholder="__"
+              className="w-8 sm:w-10 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
+
+            <span className="text-[var(--red)] font-bold">-</span>
+
+            {/* 3 digits */}
+            <input
+              value={d3}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 3);
+                setDraft(`${d1} - ${d2} - ${v}`);
+              }}
+              inputMode="numeric"
+              placeholder="___"
+              className="w-10 sm:w-12 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
+
+            {/* Save */}
+            <button
+              disabled={saving}
+              onClick={save}
+              className="ml-1 text-[8px] sm:text-xs border border-[var(--red)]
+                         px-1.5 py-0.5 text-[var(--red)] disabled:opacity-50"
+            >
+              Save
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- small building blocks (extra-compact + aligned grid) ---------------- */
 function Mini({
   title,
   rows,
 }: {
   title: string;
-  rows: { number: React.ReactNode; date: string; time: string }[];
+  rows: { number: React.ReactNode; date?: string; time: string }[];
 }) {
   return (
     <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
