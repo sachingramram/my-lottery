@@ -270,10 +270,13 @@ export default function ChartPage() {
       </span>
 
       {/* श्री - Center */}
-      <div className="text-center">
+      <div className="text-center flex flex-col items-center">
         <span className="text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
           श्री
         </span>
+        <span className="mt-1 italic text-[var(--red)] text-[18px] sm:text-xs md:text-sm opacity-80">
+      !! Welcome friends in the world of SATTAMATKA.XYZ site !!
+    </span>
       </div>
     </div>
 
