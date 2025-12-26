@@ -66,6 +66,110 @@ export default function Home() {
       </>
     );
   }
+  function Footer() {
+  const [showMsg, setShowMsg] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const messages = [
+    "Luck favors the brave 🍀",
+    "Today can change everything ✨",
+    "Believe in Baba 🙏",
+    "Your number is closer than you think 🔢",
+    "Good time is coming ⏳",
+  ];
+
+  function scrollTo(id: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function openMessage() {
+    const random = messages[Math.floor(Math.random() * messages.length)];
+    setMessage(random);
+    setShowMsg(true);
+  }
+
+  return (
+    <>
+      {/* Footer bar */}
+ <div className="fixed bottom-0 left-0 right-0 z-[9999]
+             bg-blue-600 border-t-strong border-[var(--red)]">
+<div className="grid grid-cols-5 text-[8px] sm:text-xs md:text-sm text-white">
+          
+          <FooterBtn label="Call" onClick={() => alert("Call feature coming soon")} />
+          
+          <FooterBtn
+            label="See Result"
+            onClick={() => scrollTo("results-section")}
+          />
+          
+          <FooterBtn
+            label="Panel Chart"
+            onClick={() => scrollTo("panel-chart-section")}
+          />
+          
+          <FooterBtn
+            label="Message"
+            onClick={openMessage}
+          />
+          
+          <FooterBtn
+            label="Refresh"
+            onClick={() => window.location.reload()}
+          />
+        </div>
+      </div>
+
+      {/* Message Popup */}
+      {showMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="relative bg-blue-600 border-strong border-blue-600 w-[260px] sm:w-[320px] p-4 text-center">
+            
+            {/* Cross */}
+            <button
+              onClick={() => setShowMsg(false)}
+              className="absolute top-1 right-1 text-white border border-blue-600 px-1"
+            >
+              ✕
+            </button>
+
+            <div className="text-white text-sm sm:text-base mb-4">
+              {message}
+            </div>
+
+            <button
+              onClick={() => setShowMsg(false)}
+              className="border border-blue-600 px-4 py-1 text-white text-xs sm:text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function FooterBtn({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="py-2 sm:py-3 border-r last:border-r-0 border-[var(--red)] 
+                 flex flex-col items-center justify-center hover:opacity-80"
+    >
+      {label}
+    </button>
+  );
+}
+
 
   const dateLabel = toDDMMYYYY(daily.date);
 
@@ -214,6 +318,10 @@ export default function Home() {
       className="border-strong border-[var(--red)] bg-[var(--yellow)]
                  p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
                  w-[80%] sm:w-[70%] md:w-[55%] h-full overflow-hidden"
+      // className="border-strong border-[var(--red)] bg-[var(--yellow)]
+      //            p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
+      //            w-[80%] sm:w-[70%] md:w-[55%] h-full"
+
     >
       <img
         src="/kalash.jpeg"
@@ -257,6 +365,7 @@ export default function Home() {
 
 {/*Baba Day Result*/}
 <section
+  id="results-section"
   className="mt-4 sm:mt-6 grid grid-cols-1 gap-1 sm:gap-2 md:gap-4 items-stretch"
 >
 <div className="w-full h-full">
@@ -273,7 +382,9 @@ export default function Home() {
   </div>
   </section>
 
-      <nav className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
+      <nav 
+      id="panel-chart-section"
+      className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
         {years.map((y) =>
           TYPES.map((t) => (
             <Link
@@ -285,10 +396,12 @@ export default function Home() {
             </Link>
           ))
         )}
-        <Link href="/admin" className="block text-center underline text-[10px] sm:text-sm text-yellow-200">
+        <Link href="/admin" className="block text-center underline text-[10px] sm:text-sm text-yellow-200 mb-10">
           Admin Login
         </Link>
       </nav>
+      {/* ---------- Sticky Footer ---------- */}
+    <Footer/>
     </>
   );
 }
@@ -307,6 +420,12 @@ function splitDraft(draft: string): [string, string, string] {
     parts[1] ?? "",
     parts[2] ?? "",
   ];
+}
+
+function getTiming(type: "day" | "night"): string {
+  return type === "day"
+    ? "12:30 PM – 01:30 PM"
+    : "08:00 PM – 10:30 PM";
 }
 
 /* ---------- component ---------- */
@@ -370,6 +489,7 @@ export function Tini({
 
   return (
     <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+       
       {/* title */}
       <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
         {title}
@@ -449,6 +569,10 @@ export function Tini({
           </>
         )}
       </div>
+       {/* 🔥 FIXED TIMING LINE */}
+  <div className="text-center pb-2 text-[8px] sm:text-xs md:text-sm text-[var(--red)] opacity-80">
+    ({getTiming(type)})
+  </div>
     </div>
   );
 }
@@ -463,6 +587,8 @@ function Mini({
 }) {
   return (
     <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+ 
+      
       <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
         {title}
       </div>
