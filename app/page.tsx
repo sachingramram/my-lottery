@@ -1,742 +1,742 @@
-// // app/page.tsx
-// "use client";
+// app/page.tsx
+"use client";
 
-// import Link from "next/link";
-// import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-// /* ---------------- constants you already had ---------------- */
-// const START_YEAR = 2023;
-// const END_YEAR = 2025;
-// const TYPES = ["night", "day"] as const;
-// const years = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => END_YEAR - i);
+/* ---------------- constants you already had ---------------- */
+const START_YEAR = 2023;
+const END_YEAR = 2024;
+const TYPES = ["night", "day"] as const;
+const years = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => END_YEAR - i);
 
-// /* ---------------- types to match /api/daily ---------------- */
-// type Slots = { day: [string, string]; night: [string, string] };
+/* ---------------- types to match /api/daily ---------------- */
+type Slots = { day: [string, string]; night: [string, string] };
 
-// type DailyData = {
-//   date: string;             // YYYY-MM-DD (IST display date from API)
-//   day: [string, string];    // two values for day slots
-//   night: [string, string];  // two values for night slots
-//   isAdmin: boolean;         // server decided via cookie
-//   slots: Slots;             // labels; we still print static times below
-// };
+type DailyData = {
+  date: string;             // YYYY-MM-DD (IST display date from API)
+  day: [string, string];    // two values for day slots
+  night: [string, string];  // two values for night slots
+  isAdmin: boolean;         // server decided via cookie
+  slots: Slots;             // labels; we still print static times below
+};
 
-// type GetDailyOk = { ok: true; data: DailyData };
-// type GetDailyErr = { ok: false; error: string };
-// type GetDailyResp = GetDailyOk | GetDailyErr;
+type GetDailyOk = { ok: true; data: DailyData };
+type GetDailyErr = { ok: false; error: string };
+type GetDailyResp = GetDailyOk | GetDailyErr;
 
-// type PatchDailyOk = { ok: true; data: { date: string; day: [string, string]; night: [string, string] } };
-// type PatchDailyErr = { ok: false; error: string };
-// type PatchDailyResp = PatchDailyOk | PatchDailyErr;
+type PatchDailyOk = { ok: true; data: { date: string; day: [string, string]; night: [string, string] } };
+type PatchDailyErr = { ok: false; error: string };
+type PatchDailyResp = PatchDailyOk | PatchDailyErr;
 
-// /* ---------------- page ---------------- */
-// export default function Home() {
-//   const [daily, setDaily] = useState<DailyData | null>(null);
-//   const [busy, setBusy] = useState<null | "day1" | "day2" | "night1" | "night2">(null);
-//   const [draft, setDraft] = useState<{ day: [string, string]; night: [string, string] } | null>(null);
+/* ---------------- page ---------------- */
+export default function Home() {
+  const [daily, setDaily] = useState<DailyData | null>(null);
+  const [busy, setBusy] = useState<null | "day1" | "day2" | "night1" | "night2">(null);
+  const [draft, setDraft] = useState<{ day: [string, string]; night: [string, string] } | null>(null);
 
-//   // initial fetch
-//   useEffect(() => {
-//     void refetchDaily(setDaily, setDraft);
-//   }, []);
+  // initial fetch
+  useEffect(() => {
+    void refetchDaily(setDaily, setDraft);
+  }, []);
 
-//   // auto-refetch exactly at 12:00 PM IST every day
-//   useEffect(() => {
-//     let timer: ReturnType<typeof setTimeout>;
-//     const schedule = () => {
-//       const delay = msUntilNextISTNoon();
-//       timer = setTimeout(async () => {
-//         await refetchDaily(setDaily, setDraft);
-//         schedule(); // schedule the next noon
-//       }, delay);
-//     };
-//     schedule();
-//     return () => clearTimeout(timer);
-//   }, []);
+  // auto-refetch exactly at 12:00 PM IST every day
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = msUntilNextISTNoon();
+      timer = setTimeout(async () => {
+        await refetchDaily(setDaily, setDraft);
+        schedule(); // schedule the next noon
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
 
-//   // loading
-//   if (!daily || !draft) {
-//     return (
-//       <>
-//         <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
-//           <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">बाबा</h1>
-//           <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
-//         </header>
-//         <div className="p-3 sm:p-4 text-[var(--red)] text-xs sm:text-sm">Loading…</div>
-//       </>
-//     );
-//   }
-//   function Footer() {
-//   const [showMsg, setShowMsg] = useState(false);
-//   const [message, setMessage] = useState("");
+  // loading
+  if (!daily || !draft) {
+    return (
+      <>
+        <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
+          <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">बाबा</h1>
+          <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
+        </header>
+        <div className="p-3 sm:p-4 text-[var(--red)] text-xs sm:text-sm">Loading…</div>
+      </>
+    );
+  }
+  function Footer() {
+  const [showMsg, setShowMsg] = useState(false);
+  const [message, setMessage] = useState("");
 
-//   const messages = [
-//     "Luck favors the brave 🍀",
-//     "Today can change everything ✨",
-//     "Believe in Baba 🙏",
-//     "Your number is closer than you think 🔢",
-//     "Good time is coming ⏳",
-//   ];
+  const messages = [
+    "Luck favors the brave 🍀",
+    "Today can change everything ✨",
+    "Believe in Baba 🙏",
+    "Your number is closer than you think 🔢",
+    "Good time is coming ⏳",
+  ];
 
-//   function scrollTo(id: string) {
-//     const el = document.getElementById(id);
-//     if (el) {
-//       el.scrollIntoView({ behavior: "smooth", block: "start" });
-//     }
-//   }
+  function scrollTo(id: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
-//   function openMessage() {
-//     const random = messages[Math.floor(Math.random() * messages.length)];
-//     setMessage(random);
-//     setShowMsg(true);
-//   }
+  function openMessage() {
+    const random = messages[Math.floor(Math.random() * messages.length)];
+    setMessage(random);
+    setShowMsg(true);
+  }
 
-//   return (
-//     <>
-//       {/* Footer bar */}
-//  <div className="fixed bottom-0 left-0 right-0 z-[9999]
-//              bg-blue-600 border-t-strong border-[var(--red)]">
-// <div className="grid grid-cols-5 text-[8px] sm:text-xs md:text-sm text-white">
+  return (
+    <>
+      {/* Footer bar */}
+ <div className="fixed bottom-0 left-0 right-0 z-[9999]
+             bg-blue-600 border-t-strong border-[var(--red)]">
+<div className="grid grid-cols-5 text-[8px] sm:text-xs md:text-sm text-white">
           
-//           <FooterBtn label="📞 Call" onClick={() => alert("Call feature coming soon")} />
+          <FooterBtn label="📞 Call" onClick={() => alert("Call feature coming soon")} />
           
-//           <FooterBtn
-//             label="👁️ See Result"
-//             onClick={() => scrollTo("results-section")}
-//           />
+          <FooterBtn
+            label="👁️ See Result"
+            onClick={() => scrollTo("results-section")}
+          />
           
-//           <FooterBtn
-//             label="📅 Panel Chart"
-//             onClick={() => scrollTo("panel-chart-section")}
-//           />
+          <FooterBtn
+            label="📅 Panel Chart"
+            onClick={() => scrollTo("panel-chart-section")}
+          />
           
-//           <FooterBtn
-//             label="💬 Message"
-//             onClick={openMessage}
-//           />
+          <FooterBtn
+            label="💬 Message"
+            onClick={openMessage}
+          />
           
-//           <FooterBtn
-//             label="🔄️ Refresh"
-//             onClick={() => window.location.reload()}
-//           />
-//         </div>
-//       </div>
+          <FooterBtn
+            label="🔄️ Refresh"
+            onClick={() => window.location.reload()}
+          />
+        </div>
+      </div>
 
-//       {/* Message Popup */}
-//       {showMsg && (
-//         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-//           <div className="relative bg-blue-600 border-strong border-blue-600 w-[260px] sm:w-[320px] p-4 text-center">
+      {/* Message Popup */}
+      {showMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="relative bg-blue-600 border-strong border-blue-600 w-[260px] sm:w-[320px] p-4 text-center">
             
-//             {/* Cross */}
-//             <button
-//               onClick={() => setShowMsg(false)}
-//               className="absolute top-1 right-1 text-white border border-blue-600 px-1"
-//             >
-//               ✕
-//             </button>
+            {/* Cross */}
+            <button
+              onClick={() => setShowMsg(false)}
+              className="absolute top-1 right-1 text-white border border-blue-600 px-1"
+            >
+              ✕
+            </button>
 
-//             <div className="text-white text-sm sm:text-base mb-4">
-//               {message}
-//             </div>
+            <div className="text-white text-sm sm:text-base mb-4">
+              {message}
+            </div>
 
-//             <button
-//               onClick={() => setShowMsg(false)}
-//               className="border border-blue-600 px-4 py-1 text-white text-xs sm:text-sm"
-//             >
-//               Close
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </>
-//   );
-// }
+            <button
+              onClick={() => setShowMsg(false)}
+              className="border border-blue-600 px-4 py-1 text-white text-xs sm:text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
-// function FooterBtn({
-//   label,
-//   onClick,
-// }: {
-//   label: string;
-//   onClick: () => void;
-// }) {
-//   return (
-//     <button
-//       onClick={onClick}
-//       className="py-2 sm:py-3 border-r last:border-r-0 border-[var(--red)] 
-//                  flex flex-col items-center justify-center hover:opacity-80"
-//     >
-//       {label}
-//     </button>
-//   );
-// }
+function FooterBtn({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="py-2 sm:py-3 border-r last:border-r-0 border-[var(--red)] 
+                 flex flex-col items-center justify-center hover:opacity-80"
+    >
+      {label}
+    </button>
+  );
+}
 
 
-//   const dateLabel = toDDMMYYYY(daily.date);
+  const dateLabel = toDDMMYYYY(daily.date);
 
-//   // static times (kept exactly as requested)
-//   const DAY_TIMES: [string, string] = ["11:00:00 AM", "12:00:00 PM"];
-//   const NIGHT_TIMES: [string, string] = ["06:30:00 PM", "07:30:00 PM"];
+  // static times (kept exactly as requested)
+  const DAY_TIMES: [string, string] = ["11:00:00 AM", "12:00:00 PM"];
+  const NIGHT_TIMES: [string, string] = ["06:30:00 PM", "07:30:00 PM"];
 
-//   // helpers for save/delete
-//   async function saveSlot(slot: "day1" | "day2" | "night1" | "night2", value: string) {
-//     setBusy(slot);
-//     try {
-//       const res = await fetch("/api/daily", {
-//         method: "PATCH",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ slot, value }),
-//       });
-//       const json: PatchDailyResp = await res.json();
-//       if (!json.ok) throw new Error(json.error || "Save failed");
-//       setDaily((prev) =>
-//         prev ? { ...prev, day: json.data.day as [string, string], night: json.data.night as [string, string] } : prev
-//       );
-//       setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
-//     } catch (e) {
-//       alert(e instanceof Error ? e.message : String(e));
-//     } finally {
-//       setBusy(null);
-//     }
-//   }
-//   async function deleteSlot(slot: "day1" | "day2" | "night1" | "night2") {
-//     await saveSlot(slot, ""); // server treats empty as cleared
-//   }
+  // helpers for save/delete
+  async function saveSlot(slot: "day1" | "day2" | "night1" | "night2", value: string) {
+    setBusy(slot);
+    try {
+      const res = await fetch("/api/daily", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot, value }),
+      });
+      const json: PatchDailyResp = await res.json();
+      if (!json.ok) throw new Error(json.error || "Save failed");
+      setDaily((prev) =>
+        prev ? { ...prev, day: json.data.day as [string, string], night: json.data.night as [string, string] } : prev
+      );
+      setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function deleteSlot(slot: "day1" | "day2" | "night1" | "night2") {
+    await saveSlot(slot, ""); // server treats empty as cleared
+  }
 
-//   // rows composed from API (preserving your structure)
-//   const dayRows = [
-//     { saved: daily.day[0], value: draft.day[0], date: dateLabel, time: DAY_TIMES[0], slot: "day1" as const, idx: 0 },
-//     { saved: daily.day[1], value: draft.day[1], date: dateLabel, time: DAY_TIMES[1], slot: "day2" as const, idx: 1 },
-//   ];
-//   const nightRows = [
-//     { saved: daily.night[0], value: draft.night[0], date: dateLabel, time: NIGHT_TIMES[0], slot: "night1" as const, idx: 0 },
-//     { saved: daily.night[1], value: draft.night[1], date: dateLabel, time: NIGHT_TIMES[1], slot: "night2" as const, idx: 1 },
-//   ];
+  // rows composed from API (preserving your structure)
+  const dayRows = [
+    { saved: daily.day[0], value: draft.day[0], date: dateLabel, time: DAY_TIMES[0], slot: "day1" as const, idx: 0 },
+    { saved: daily.day[1], value: draft.day[1], date: dateLabel, time: DAY_TIMES[1], slot: "day2" as const, idx: 1 },
+  ];
+  const nightRows = [
+    { saved: daily.night[0], value: draft.night[0], date: dateLabel, time: NIGHT_TIMES[0], slot: "night1" as const, idx: 0 },
+    { saved: daily.night[1], value: draft.night[1], date: dateLabel, time: NIGHT_TIMES[1], slot: "night2" as const, idx: 1 },
+  ];
   
 
-//   return (
-//     <>
-//     {/* Top autoplay video */}
-// {/* Top autoplay video */}
-// <section className="relative mt-2 md:mt-3">
-//   {/* Outer bordered container */}
-//   <div className="relative mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] 
-//                   p-2 sm:p-3 md:p-4 flex flex-col items-center justify-start rounded-lg
-//                   max-w-full">
+  return (
+    <>
+    {/* Top autoplay video */}
+{/* Top autoplay video */}
+<section className="relative mt-2 md:mt-3">
+  {/* Outer bordered container */}
+  <div className="relative mx-auto border-strong border-[var(--red)] bg-[var(--yellow)] 
+                  p-2 sm:p-3 md:p-4 flex flex-col items-center justify-start rounded-lg
+                  max-w-full">
 
-//     {/* Maa & Shree text (top row) */}
-//     <div className="w-full relative mb-2 sm:mb-3">
-//       {/* माँ - Left */}
-//       <span className="absolute left-6 sm:left-10 text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
-//         माँ
-//       </span>
+    {/* Maa & Shree text (top row) */}
+    <div className="w-full relative mb-2 sm:mb-3">
+      {/* माँ - Left */}
+      <span className="absolute left-6 sm:left-10 text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
+        माँ
+      </span>
 
-//       {/* श्री - Center */}
-//       <div className="text-center flex flex-col items-center">
-//         <span className="text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
-//           श्री
-//         </span>
-//          <span className="mt-1 italic text-[var(--red)] text-[18px] sm:text-xs md:text-sm opacity-80">
-//       !! Welcome friends in the world of SATTAMATKA.XYZ site !!
-//     </span>
-//       </div>
-//     </div>
+      {/* श्री - Center */}
+      <div className="text-center flex flex-col items-center">
+        <span className="text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
+          श्री
+        </span>
+         <span className="mt-1 italic text-[var(--red)] text-[18px] sm:text-xs md:text-sm opacity-80">
+      !! Welcome friends in the world of SATTAMATKA.XYZ site !!
+    </span>
+      </div>
+    </div>
 
-//     {/* Inner video box */}
-//     <div className="border-strong border-[var(--red)] bg-[var(--yellow)] 
-//                     p-1 sm:p-1.5 md:p-2 rounded-md
-//                     w-[85%] sm:w-[80%] md:w-[70%] flex justify-center items-center">
-//       <video
-//         src="/video5.mp4"
-//         autoPlay
-//         muted
-//         loop
-//         playsInline
-//         preload="auto"
-//         onEnded={(e) => {
-//           const v = e.currentTarget;
-//           v.currentTime = 0;
-//           void v.play();
-//         }}
-//         onCanPlay={(e) => {
-//           const v = e.currentTarget;
-//           if (v.paused) void v.play();
-//         }}
-//         className="block w-full h-auto object-cover rounded-sm
-//                    max-h-[120px] sm:max-h-[160px] md:max-h-[180px]"
-//       />
-//     </div>
-//   </div>
-// </section>
-
-
+    {/* Inner video box */}
+    <div className="border-strong border-[var(--red)] bg-[var(--yellow)] 
+                    p-1 sm:p-1.5 md:p-2 rounded-md
+                    w-[85%] sm:w-[80%] md:w-[70%] flex justify-center items-center">
+      <video
+        // src="/video5.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        onEnded={(e) => {
+          const v = e.currentTarget;
+          v.currentTime = 0;
+          void v.play();
+        }}
+        onCanPlay={(e) => {
+          const v = e.currentTarget;
+          if (v.paused) void v.play();
+        }}
+        className="block w-full h-auto object-cover rounded-sm
+                   max-h-[120px] sm:max-h-[160px] md:max-h-[180px]"
+      />
+    </div>
+  </div>
+</section>
 
 
 
 
-//       <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
-//         <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">बाबा</h1>
-//         <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
-//       </header>
-// {/* 3 columns layout; columns stretch to same height and center image follows */}
-// <section
-//   className="mt-4 sm:mt-6 grid grid-cols-[1.3fr_0.7fr_1.3fr] gap-1 sm:gap-2 md:gap-4 items-stretch"
-// >
-//   {/* Baba Day - make this container stretch */}
-//   <div className="w-full h-full">
-//     <div className="h-full flex flex-col">
-//       <Mini
-//         title="Baba Day"
-//         rows={dayRows.map((r) => ({
-//           number: (
-//             <NumberCell
-//               saved={r.saved}
-//               value={r.value}
-//               editable={daily.isAdmin}
-//               saving={busy === r.slot}
-//               onChange={(v) => {
-//                 setDraft((prev) => {
-//                   if (!prev) return prev;
-//                   const next = { ...prev, day: [...prev.day] as [string, string] };
-//                   next.day[r.idx] = v;
-//                   return next;
-//                 });
-//               }}
-//               onSave={() => saveSlot(r.slot, draft.day[r.idx])}
-//               onDelete={() => deleteSlot(r.slot)}
-//             />
-//           ),
-//           date: r.date,
-//           time: r.time,
-//         }))}
-//       />
-//     </div>
-//   </div>
 
-//   {/* Center image - make it fill the full column height */}
-//   <div className="flex justify-center h-full">
-//     <figure
-//       className="border-strong border-[var(--red)] bg-[var(--yellow)]
-//                  p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
-//                  w-[80%] sm:w-[70%] md:w-[55%] h-full overflow-hidden"
-//       // className="border-strong border-[var(--red)] bg-[var(--yellow)]
-//       //            p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
-//       //            w-[80%] sm:w-[70%] md:w-[55%] h-full"
 
-//     >
-//       <img
-//         src="/kalash.jpeg"
-//         alt="idol"
-//         className="w-full h-full object-cover"
-//       />
-//     </figure>
-//   </div>
+      <header className="mx-auto bg-[var(--yellow)] text-[var(--red)] text-center border-strong border-[var(--red)] py-3 sm:py-4 md:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-6xl font-extrabold">बाबा</h1>
+        <p className="text-xs sm:text-lg md:text-3xl mt-0.5 sm:mt-1">YOUR LUCK LOTTERY NUMBER</p>
+      </header>
+{/* 3 columns layout; columns stretch to same height and center image follows */}
+<section
+  className="mt-4 sm:mt-6 grid grid-cols-[1.3fr_0.7fr_1.3fr] gap-1 sm:gap-2 md:gap-4 items-stretch"
+>
+  {/* Baba Day - make this container stretch */}
+  {/* <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Mini
+        title="Baba Day"
+        rows={dayRows.map((r) => ({
+          number: (
+            <NumberCell
+              saved={r.saved}
+              value={r.value}
+              editable={daily.isAdmin}
+              saving={busy === r.slot}
+              onChange={(v) => {
+                setDraft((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev, day: [...prev.day] as [string, string] };
+                  next.day[r.idx] = v;
+                  return next;
+                });
+              }}
+              onSave={() => saveSlot(r.slot, draft.day[r.idx])}
+              onDelete={() => deleteSlot(r.slot)}
+            />
+          ),
+          date: r.date,
+          time: r.time,
+        }))}
+      />
+    </div>
+  </div> */}
 
-//   {/* Baba Night - also stretch */}
-//   <div className="w-full h-full">
-//     <div className="h-full flex flex-col">
-//       <Mini
-//         title="Baba Night"
-//         rows={nightRows.map((r) => ({
-//           number: (
-//             <NumberCell
-//               saved={r.saved}
-//               value={r.value}
-//               editable={daily.isAdmin}
-//               saving={busy === r.slot}
-//               onChange={(v) => {
-//                 setDraft((prev) => {
-//                   if (!prev) return prev;
-//                   const next = { ...prev, night: [...prev.night] as [string, string] };
-//                   next.night[r.idx] = v;
-//                   return next;
-//                 });
-//               }}
-//               onSave={() => saveSlot(r.slot, draft.night[r.idx])}
-//               onDelete={() => deleteSlot(r.slot)}
-//             />
-//           ),
-//           date: r.date,
-//           time: r.time,
-//         }))}
-//       />
-//     </div>
-//   </div>
-// </section>
+  {/* Center image - make it fill the full column height */}
+  <div className="flex justify-center h-full">
+    <figure
+      className="border-strong border-[var(--red)] bg-[var(--yellow)]
+                 p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
+                 w-[80%] sm:w-[70%] md:w-[55%] h-full overflow-hidden"
+      // className="border-strong border-[var(--red)] bg-[var(--yellow)]
+      //            p-0.5 sm:p-1 md:p-1.5 flex items-center justify-center
+      //            w-[80%] sm:w-[70%] md:w-[55%] h-full"
 
-// {/*Baba Day Result*/}
-// <section
-//   id="results-section"
-//   className="mt-4 sm:mt-6 grid grid-cols-1 gap-1 sm:gap-2 md:gap-4 items-stretch"
-// >
-// <div className="w-full h-full">
-//     <div className="h-full flex flex-col">
-//       <Tini title="Baba Day Result" type="day" isAdmin={daily.isAdmin} />
-//     </div>
-//   </div>
+    >
+      <img
+        // src="/kalash.jpeg"
+        alt="idol"
+        className="w-full h-full object-cover"
+      />
+    </figure>
+  </div>
 
-//   {/* Baba Night Result*/ }
-// <div className="w-full h-full">
-//     <div className="h-full flex flex-col">
-//       <Tini title="Baba Night Result" type="night" isAdmin={daily.isAdmin} />
-//     </div>
-//   </div>
-//   </section>
+  {/* Baba Night - also stretch */}
+  {/* <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Mini
+        title="Baba Night"
+        rows={nightRows.map((r) => ({
+          number: (
+            <NumberCell
+              saved={r.saved}
+              value={r.value}
+              editable={daily.isAdmin}
+              saving={busy === r.slot}
+              onChange={(v) => {
+                setDraft((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev, night: [...prev.night] as [string, string] };
+                  next.night[r.idx] = v;
+                  return next;
+                });
+              }}
+              onSave={() => saveSlot(r.slot, draft.night[r.idx])}
+              onDelete={() => deleteSlot(r.slot)}
+            />
+          ),
+          date: r.date,
+          time: r.time,
+        }))}
+      />
+    </div>
+  </div> */}
+</section>
 
-//       <nav 
-//       id="panel-chart-section"
-//       className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
-//         {years.map((y) =>
-//           TYPES.map((t) => (
-//             <Link
-//               key={`${y}-${t}`}
-//               href={`/chart/${y}/${t}`}
-//               className="block text-center bg-[var(--yellow)] text-[var(--red)] text-sm sm:text-xl md:text-3xl border-strong border-[var(--red)] py-2.5 sm:py-4 md:py-6 hover:opacity-90"
-//             >
-//               {`Baba ${t[0].toUpperCase() + t.slice(1)} Panel Chart ${y}`}
-//             </Link>
-//           ))
-//         )}
-//         <Link href="/admin" className="block text-center underline text-[10px] sm:text-sm text-yellow-200 mb-10">
-//           Admin Login
-//         </Link>
-//       </nav>
-//       {/* ---------- Sticky Footer ---------- */}
-//     <Footer/>
-//     </>
-//   );
-// }
+{/*Baba Day Result*/}
+<section
+  id="results-section"
+  className="mt-4 sm:mt-6 grid grid-cols-1 gap-1 sm:gap-2 md:gap-4 items-stretch"
+>
+{/* <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Tini title="Baba Day Result" type="day" isAdmin={daily.isAdmin} />
+    </div>
+  </div> */}
+
+  {/* Baba Night Result*/ }
+{/* <div className="w-full h-full">
+    <div className="h-full flex flex-col">
+      <Tini title="Baba Night Result" type="night" isAdmin={daily.isAdmin} />
+    </div>
+  </div> */}
+  </section>
+
+      <nav 
+      id="panel-chart-section"
+      className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 md:space-y-6">
+        {years.map((y) =>
+          TYPES.map((t) => (
+            <Link
+              key={`${y}-${t}`}
+              href={`/chart/${y}/${t}`}
+              className="block text-center bg-[var(--yellow)] text-[var(--red)] text-sm sm:text-xl md:text-3xl border-strong border-[var(--red)] py-2.5 sm:py-4 md:py-6 hover:opacity-90"
+            >
+              {`Baba ${t[0].toUpperCase() + t.slice(1)} Panel Chart ${y}`}
+            </Link>
+          ))
+        )}
+        <Link href="/admin" className="block text-center underline text-[10px] sm:text-sm text-yellow-200 mb-10">
+          Admin Login
+        </Link>
+      </nav>
+      {/* ---------- Sticky Footer ---------- */}
+    {/* <Footer/> */}
+    </>
+  );
+}
 
  
 
-// /* ---------- helpers ---------- */
-// function onlyDigits(v: string, max: number) {
-//   return v.replace(/\D/g, "").slice(0, max);
-// }
+/* ---------- helpers ---------- */
+function onlyDigits(v: string, max: number) {
+  return v.replace(/\D/g, "").slice(0, max);
+}
 
-// function splitDraft(draft: string): [string, string, string] {
-//   const parts = draft.split(" - ");
-//   return [
-//     parts[0] ?? "",
-//     parts[1] ?? "",
-//     parts[2] ?? "",
-//   ];
-// }
+function splitDraft(draft: string): [string, string, string] {
+  const parts = draft.split(" - ");
+  return [
+    parts[0] ?? "",
+    parts[1] ?? "",
+    parts[2] ?? "",
+  ];
+}
 
-// function getTiming(type: "day" | "night"): string {
-//   return type === "day"
-//     ? "12:30 PM – 01:30 PM"
-//     : "08:00 PM – 10:30 PM";
-// }
+function getTiming(type: "day" | "night"): string {
+  return type === "day"
+    ? "12:30 PM – 01:30 PM"
+    : "08:00 PM – 10:30 PM";
+}
 
-// /* ---------- component ---------- */
-// export function Tini({
-//   title,
-//   type,
-//   isAdmin,
-// }: {
-//   title: string;
-//   type: "day" | "night";
-//   isAdmin: boolean;
-// }) {
-//   const [value, setValue] = useState<string>("");     // saved value
-//   const [draft, setDraft] = useState<string>("");     // editable draft
-//   const [editing, setEditing] = useState<boolean>(false);
-//   const [saving, setSaving] = useState<boolean>(false);
+/* ---------- component ---------- */
+export function Tini({
+  title,
+  type,
+  isAdmin,
+}: {
+  title: string;
+  type: "day" | "night";
+  isAdmin: boolean;
+}) {
+  const [value, setValue] = useState<string>("");     // saved value
+  const [draft, setDraft] = useState<string>("");     // editable draft
+  const [editing, setEditing] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
 
-//   /* load saved value */
-//   useEffect(() => {
-//     fetch(`/api/result?type=${type}`, { cache: "no-store" })
-//       .then((r) => r.json())
-//       .then((d: { ok: boolean; value?: string }) => {
-//         if (d.ok) {
-//           setValue(d.value ?? "");
-//           setDraft(d.value ?? "");
-//         }
-//       });
-//   }, [type]);
+  /* load saved value */
+  useEffect(() => {
+    fetch(`/api/result?type=${type}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { ok: boolean; value?: string }) => {
+        if (d.ok) {
+          setValue(d.value ?? "");
+          setDraft(d.value ?? "");
+        }
+      });
+  }, [type]);
 
-//   async function save() {
-//     const [a, b, c] = splitDraft(draft);
+  async function save() {
+    const [a, b, c] = splitDraft(draft);
 
-//     // strict 3-2-3 validation
-//     if (a.length !== 3 || b.length !== 2 || c.length !== 3) {
-//       alert("Format must be 3-2-3 digits");
-//       return;
-//     }
+    // strict 3-2-3 validation
+    if (a.length !== 3 || b.length !== 2 || c.length !== 3) {
+      alert("Format must be 3-2-3 digits");
+      return;
+    }
 
-//     setSaving(true);
+    setSaving(true);
 
-//     const res = await fetch("/api/result", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         type,
-//         value: `${a} - ${b} - ${c}`,
-//       }),
-//     }).then((r) => r.json());
+    const res = await fetch("/api/result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        value: `${a} - ${b} - ${c}`,
+      }),
+    }).then((r) => r.json());
 
-//     if (res.ok) {
-//       setValue(res.value);
-//       setEditing(false);
-//     } else {
-//       alert(res.error || "Save failed");
-//     }
+    if (res.ok) {
+      setValue(res.value);
+      setEditing(false);
+    } else {
+      alert(res.error || "Save failed");
+    }
 
-//     setSaving(false);
-//   }
+    setSaving(false);
+  }
 
-//   const [d1, d2, d3] = splitDraft(draft);
+  const [d1, d2, d3] = splitDraft(draft);
 
-//   return (
-//     <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+  return (
+    <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
        
-//       {/* title */}
-//       <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
-//         {title}
-//       </div>
+      {/* title */}
+      <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
+        {title}
+      </div>
 
-//       {/* content */}
-//       <div className="flex items-center justify-center gap-2 py-2 sm:py-3">
-//         {!editing ? (
-//           <>
-//             <span className="text-[var(--red)] text-sm sm:text-lg md:text-xl font-semibold tracking-wider">
-//               {value || "_ _ _ - _ _ - _ _ _"}
-//             </span>
+      {/* content */}
+      <div className="flex items-center justify-center gap-2 py-2 sm:py-3">
+        {!editing ? (
+          <>
+            <span className="text-[var(--red)] text-sm sm:text-lg md:text-xl font-semibold tracking-wider">
+              {value || "_ _ _ - _ _ - _ _ _"}
+            </span>
 
-//             {isAdmin && (
-//               <button
-//                 onClick={() => setEditing(true)}
-//                 className="text-[8px] sm:text-xs border border-[var(--red)] px-1.5 py-0.5 text-[var(--red)]"
-//               >
-//                 Edit
-//               </button>
-//             )}
-//           </>
-//         ) : (
-//           <>
-//             {/* 3 digits */}
-//             <input
-//               value={d1}
-//               onChange={(e) => {
-//                 const v = onlyDigits(e.target.value, 3);
-//                 setDraft(`${v} - ${d2} - ${d3}`);
-//               }}
-//               inputMode="numeric"
-//               placeholder="___"
-//               className="w-10 sm:w-12 text-center text-sm sm:text-lg
-//                          border border-[var(--red)] bg-yellow-300/30"
-//             />
+            {isAdmin && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-[8px] sm:text-xs border border-[var(--red)] px-1.5 py-0.5 text-[var(--red)]"
+              >
+                Edit
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {/* 3 digits */}
+            <input
+              value={d1}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 3);
+                setDraft(`${v} - ${d2} - ${d3}`);
+              }}
+              inputMode="numeric"
+              placeholder="___"
+              className="w-10 sm:w-12 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
 
-//             <span className="text-[var(--red)] font-bold">-</span>
+            <span className="text-[var(--red)] font-bold">-</span>
 
-//             {/* 2 digits */}
-//             <input
-//               value={d2}
-//               onChange={(e) => {
-//                 const v = onlyDigits(e.target.value, 2);
-//                 setDraft(`${d1} - ${v} - ${d3}`);
-//               }}
-//               inputMode="numeric"
-//               placeholder="__"
-//               className="w-8 sm:w-10 text-center text-sm sm:text-lg
-//                          border border-[var(--red)] bg-yellow-300/30"
-//             />
+            {/* 2 digits */}
+            <input
+              value={d2}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 2);
+                setDraft(`${d1} - ${v} - ${d3}`);
+              }}
+              inputMode="numeric"
+              placeholder="__"
+              className="w-8 sm:w-10 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
 
-//             <span className="text-[var(--red)] font-bold">-</span>
+            <span className="text-[var(--red)] font-bold">-</span>
 
-//             {/* 3 digits */}
-//             <input
-//               value={d3}
-//               onChange={(e) => {
-//                 const v = onlyDigits(e.target.value, 3);
-//                 setDraft(`${d1} - ${d2} - ${v}`);
-//               }}
-//               inputMode="numeric"
-//               placeholder="___"
-//               className="w-10 sm:w-12 text-center text-sm sm:text-lg
-//                          border border-[var(--red)] bg-yellow-300/30"
-//             />
+            {/* 3 digits */}
+            <input
+              value={d3}
+              onChange={(e) => {
+                const v = onlyDigits(e.target.value, 3);
+                setDraft(`${d1} - ${d2} - ${v}`);
+              }}
+              inputMode="numeric"
+              placeholder="___"
+              className="w-10 sm:w-12 text-center text-sm sm:text-lg
+                         border border-[var(--red)] bg-yellow-300/30"
+            />
 
-//             {/* Save */}
-//             <button
-//               disabled={saving}
-//               onClick={save}
-//               className="ml-1 text-[8px] sm:text-xs border border-[var(--red)]
-//                          px-1.5 py-0.5 text-[var(--red)] disabled:opacity-50"
-//             >
-//               Save
-//             </button>
-//           </>
-//         )}
-//       </div>
-//        {/* 🔥 FIXED TIMING LINE */}
-//   <div className="text-center pb-2 text-[8px] sm:text-xs md:text-sm text-[var(--red)] opacity-80">
-//     ({getTiming(type)})
-//   </div>
-//     </div>
-//   );
-// }
+            {/* Save */}
+            <button
+              disabled={saving}
+              onClick={save}
+              className="ml-1 text-[8px] sm:text-xs border border-[var(--red)]
+                         px-1.5 py-0.5 text-[var(--red)] disabled:opacity-50"
+            >
+              Save
+            </button>
+          </>
+        )}
+      </div>
+       {/* 🔥 FIXED TIMING LINE */}
+  <div className="text-center pb-2 text-[8px] sm:text-xs md:text-sm text-[var(--red)] opacity-80">
+    ({getTiming(type)})
+  </div>
+    </div>
+  );
+}
 
-// /* ---------------- small building blocks (extra-compact + aligned grid) ---------------- */
-// function Mini({
-//   title,
-//   rows,
-// }: {
-//   title: string;
-//   rows: { number: React.ReactNode; date?: string; time: string }[];
-// }) {
-//   return (
-//     <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
+/* ---------------- small building blocks (extra-compact + aligned grid) ---------------- */
+function Mini({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: { number: React.ReactNode; date?: string; time: string }[];
+}) {
+  return (
+    <div className="bg-[var(--yellow)] border-strong border-[var(--red)] overflow-hidden">
  
       
-//       <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
-//         {title}
-//       </div>
+      <div className="text-center py-1 sm:py-1.5 md:py-3 text-[9px] sm:text-sm md:text-2xl text-[var(--red)] border-b-strong border-[var(--red)]">
+        {title}
+      </div>
 
-//       {/* Perfect alignment: remove table outer border, use box-border + collapse, keep borders on cells */}
-//       <table className="w-full text-[var(--red)] text-[9px] sm:text-xs md:text-lg box-border border-collapse">
-//         <thead>
-//           <tr className="text-center">
-//             {["Number", "Date", "Time"].map((h, i) => (
-//               <th
-//                 key={i}
-//                 className="py-1 sm:py-1.5 md:py-3 px-1 sm:px-2 border border-[var(--red)]"
-//               >
-//                 {h}
-//               </th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {rows.map((r, i) => (
-//             <tr key={i} className="text-center">
-//               <Td>{r.number}</Td>
-//               <Td>{r.date}</Td>
-//               <Td>
-//                 <div className="leading-tight">
-//                   <div>{r.time.split(" ")[0]}</div>
-//                   <div className="uppercase">{r.time.split(" ")[1]}</div>
-//                 </div>
-//               </Td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// }
+      {/* Perfect alignment: remove table outer border, use box-border + collapse, keep borders on cells */}
+      <table className="w-full text-[var(--red)] text-[9px] sm:text-xs md:text-lg box-border border-collapse">
+        <thead>
+          <tr className="text-center">
+            {["Number", "Date", "Time"].map((h, i) => (
+              <th
+                key={i}
+                className="py-1 sm:py-1.5 md:py-3 px-1 sm:px-2 border border-[var(--red)]"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="text-center">
+              <Td>{r.number}</Td>
+              <Td>{r.date}</Td>
+              <Td>
+                <div className="leading-tight">
+                  <div>{r.time.split(" ")[0]}</div>
+                  <div className="uppercase">{r.time.split(" ")[1]}</div>
+                </div>
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-// function Td({ children }: { children: React.ReactNode }) {
-//   return (
-//     <td className="py-1 sm:py-2 md:py-5 px-1 sm:px-2 border border-[var(--red)]">
-//       {children}
-//     </td>
-//   );
-// }
+function Td({ children }: { children: React.ReactNode }) {
+  return (
+    <td className="py-1 sm:py-2 md:py-5 px-1 sm:px-2 border border-[var(--red)]">
+      {children}
+    </td>
+  );
+}
 
-// /* --------- NumberCell: smallest square input; micro buttons below; save shown only when dirty --------- */
-// function NumberCell({
-//   saved,
-//   value,
-//   editable,
-//   saving,
-//   onChange,
-//   onSave,
-//   onDelete,
-// }: {
-//   saved: string;   // last saved value from server
-//   value: string;   // current draft value
-//   editable: boolean;
-//   saving: boolean;
-//   onChange: (v: string) => void;
-//   onSave: () => void;
-//   onDelete: () => void;
-// }) {
-//   if (!editable) {
-//     return <span>{value || "-"}</span>;
-//   }
+/* --------- NumberCell: smallest square input; micro buttons below; save shown only when dirty --------- */
+function NumberCell({
+  saved,
+  value,
+  editable,
+  saving,
+  onChange,
+  onSave,
+  onDelete,
+}: {
+  saved: string;   // last saved value from server
+  value: string;   // current draft value
+  editable: boolean;
+  saving: boolean;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  onDelete: () => void;
+}) {
+  if (!editable) {
+    return <span>{value || "-"}</span>;
+  }
 
-//   const dirty = value !== saved;
+  const dirty = value !== saved;
 
-//   return (
-//     <div className="flex flex-col items-center gap-0.5">
-//       <input
-//         value={value}
-//         onChange={(e) => onChange(e.target.value)}
-//         className="w-9 h-9 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-20 md:h-20
-//                    text-center text-[10px] xs:text-[11px] sm:text-sm md:text-xl
-//                    border border-[var(--red)] bg-yellow-300/30 text-[var(--red)]"
-//         placeholder=""
-//       />
-//       <div className="grid grid-cols-2 gap-1">
-//         {/* Show Save only when dirty */}
-//         {dirty ? (
-//           <button
-//             onClick={onSave}
-//             disabled={saving}
-//             className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
-//                        bg-[var(--yellow)] text-[var(--red)] leading-none"
-//           >
-//             {saving ? "…" : "Save"}
-//           </button>
-//         ) : (
-//           <span className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs opacity-0 select-none leading-none">.</span>
-//         )}
-//         <button
-//           onClick={onDelete}
-//           disabled={saving}
-//           className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
-//                      bg-white text-[var(--red)] leading-none"
-//           title="Clear"
-//         >
-//           Del
-//         </button>
-//       </div>
-//     </div>
-//   );
-// }
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-9 h-9 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-20 md:h-20
+                   text-center text-[10px] xs:text-[11px] sm:text-sm md:text-xl
+                   border border-[var(--red)] bg-yellow-300/30 text-[var(--red)]"
+        placeholder=""
+      />
+      <div className="grid grid-cols-2 gap-1">
+        {/* Show Save only when dirty */}
+        {dirty ? (
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
+                       bg-[var(--yellow)] text-[var(--red)] leading-none"
+          >
+            {saving ? "…" : "Save"}
+          </button>
+        ) : (
+          <span className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs opacity-0 select-none leading-none">.</span>
+        )}
+        <button
+          onClick={onDelete}
+          disabled={saving}
+          className="px-1 py-[1px] text-[8px] sm:text-[10px] md:text-xs border border-[var(--red)]
+                     bg-white text-[var(--red)] leading-none"
+          title="Clear"
+        >
+          Del
+        </button>
+      </div>
+    </div>
+  );
+}
 
-// /* ---------------- utils ---------------- */
-// function toDDMMYYYY(iso: string): string {
-//   const [y, m, d] = iso.split("-");
-//   return `${d}-${m}-${y}`;
-// }
+/* ---------------- utils ---------------- */
+function toDDMMYYYY(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}-${m}-${y}`;
+}
 
-// /* ---------------- IST noon scheduler helpers ---------------- */
-// const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+/* ---------------- IST noon scheduler helpers ---------------- */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
-// function msUntilNextISTNoon(): number {
-//   const now = Date.now();
-//   const istNow = new Date(now + IST_OFFSET_MS); // shift epoch to IST
-//   const y = istNow.getUTCFullYear();
-//   const m = istNow.getUTCMonth();
-//   const d = istNow.getUTCDate();
+function msUntilNextISTNoon(): number {
+  const now = Date.now();
+  const istNow = new Date(now + IST_OFFSET_MS); // shift epoch to IST
+  const y = istNow.getUTCFullYear();
+  const m = istNow.getUTCMonth();
+  const d = istNow.getUTCDate();
 
-//   // today 12:00:00 IST → convert back to real epoch by subtracting offset
-//   const todayNoonIST_asUTC = Date.UTC(y, m, d, 12, 0, 0);
-//   let target = todayNoonIST_asUTC - IST_OFFSET_MS;
+  // today 12:00:00 IST → convert back to real epoch by subtracting offset
+  const todayNoonIST_asUTC = Date.UTC(y, m, d, 12, 0, 0);
+  let target = todayNoonIST_asUTC - IST_OFFSET_MS;
 
-//   if (now >= target) {
-//     // already past today's noon IST → schedule tomorrow noon
-//     const tomorrowIST = new Date(istNow);
-//     tomorrowIST.setUTCDate(tomorrowIST.getUTCDate() + 1);
-//     const y2 = tomorrowIST.getUTCFullYear();
-//     const m2 = tomorrowIST.getUTCMonth();
-//     const d2 = tomorrowIST.getUTCDate();
-//     target = Date.UTC(y2, m2, d2, 12, 0, 0) - IST_OFFSET_MS;
-//   }
+  if (now >= target) {
+    // already past today's noon IST → schedule tomorrow noon
+    const tomorrowIST = new Date(istNow);
+    tomorrowIST.setUTCDate(tomorrowIST.getUTCDate() + 1);
+    const y2 = tomorrowIST.getUTCFullYear();
+    const m2 = tomorrowIST.getUTCMonth();
+    const d2 = tomorrowIST.getUTCDate();
+    target = Date.UTC(y2, m2, d2, 12, 0, 0) - IST_OFFSET_MS;
+  }
 
-//   return Math.max(0, target - now);
-// }
+  return Math.max(0, target - now);
+}
 
-// async function refetchDaily(
-//   setDaily: React.Dispatch<React.SetStateAction<DailyData | null>>,
-//   setDraft: React.Dispatch<React.SetStateAction<{ day: [string, string]; night: [string, string] } | null>>
-// ) {
-//   const res = await fetch("/api/daily", { cache: "no-store" });
-//   const json: GetDailyResp = await res.json();
-//   if (json.ok) {
-//     setDaily(json.data);
-//     setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
-//   }
-// }
+async function refetchDaily(
+  setDaily: React.Dispatch<React.SetStateAction<DailyData | null>>,
+  setDraft: React.Dispatch<React.SetStateAction<{ day: [string, string]; night: [string, string] } | null>>
+) {
+  const res = await fetch("/api/daily", { cache: "no-store" });
+  const json: GetDailyResp = await res.json();
+  if (json.ok) {
+    setDaily(json.data);
+    setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
+  }
+}
