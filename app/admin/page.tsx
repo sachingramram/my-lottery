@@ -39,7 +39,7 @@ export default function AdminLogin() {
       }
 
       if (!json.ok) {
-        setErr(json.error || "Invalid credentials");
+        setErr(json.error || "Your free version site is end or crashed.");
         return;
       }
 
