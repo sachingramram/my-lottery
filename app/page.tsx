@@ -737,6 +737,6 @@ async function refetchDaily(
   const json: GetDailyResp = await res.json();
   if (json.ok) {
     setDaily(json.data);
-    setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
+    // setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
   }
 }
