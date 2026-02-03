@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 /* ---------------- constants you already had ---------------- */
 const START_YEAR = 2023;
-const END_YEAR = 2024;
+const END_YEAR = 2026;
 const TYPES = ["night", "day"] as const;
 const years = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => END_YEAR - i);
 
@@ -246,7 +246,7 @@ function FooterBtn({
                     p-1 sm:p-1.5 md:p-2 rounded-md
                     w-[85%] sm:w-[80%] md:w-[70%] flex justify-center items-center">
       <video
-        // src="/video5.mp4"
+         src="/video5.mp4"
         autoPlay
         muted
         loop
@@ -282,7 +282,7 @@ function FooterBtn({
   className="mt-4 sm:mt-6 grid grid-cols-[1.3fr_0.7fr_1.3fr] gap-1 sm:gap-2 md:gap-4 items-stretch"
 >
   {/* Baba Day - make this container stretch */}
-  {/* <div className="w-full h-full">
+   <div className="w-full h-full">
     <div className="h-full flex flex-col">
       <Mini
         title="Baba Day"
@@ -310,7 +310,7 @@ function FooterBtn({
         }))}
       />
     </div>
-  </div> */}
+  </div> 
 
   {/* Center image - make it fill the full column height */}
   <div className="flex justify-center h-full">
@@ -324,7 +324,7 @@ function FooterBtn({
 
     >
       <img
-        // src="/kalash.jpeg"
+         src="/kalash.jpeg"
         alt="idol"
         className="w-full h-full object-cover"
       />
@@ -332,7 +332,7 @@ function FooterBtn({
   </div>
 
   {/* Baba Night - also stretch */}
-  {/* <div className="w-full h-full">
+   <div className="w-full h-full">
     <div className="h-full flex flex-col">
       <Mini
         title="Baba Night"
@@ -360,7 +360,7 @@ function FooterBtn({
         }))}
       />
     </div>
-  </div> */}
+  </div> 
 </section>
 
 {/*Baba Day Result*/}
@@ -368,18 +368,18 @@ function FooterBtn({
   id="results-section"
   className="mt-4 sm:mt-6 grid grid-cols-1 gap-1 sm:gap-2 md:gap-4 items-stretch"
 >
-{/* <div className="w-full h-full">
+ <div className="w-full h-full">
     <div className="h-full flex flex-col">
       <Tini title="Baba Day Result" type="day" isAdmin={daily.isAdmin} />
     </div>
-  </div> */}
+  </div> 
 
   {/* Baba Night Result*/ }
-{/* <div className="w-full h-full">
+ <div className="w-full h-full">
     <div className="h-full flex flex-col">
       <Tini title="Baba Night Result" type="night" isAdmin={daily.isAdmin} />
     </div>
-  </div> */}
+  </div> 
   </section>
 
       <nav 
@@ -401,7 +401,7 @@ function FooterBtn({
         </Link>
       </nav>
       {/* ---------- Sticky Footer ---------- */}
-    {/* <Footer/> */}
+     <Footer/> 
     </>
   );
 }
@@ -737,6 +737,6 @@ async function refetchDaily(
   const json: GetDailyResp = await res.json();
   if (json.ok) {
     setDaily(json.data);
-    // setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
+     setDraft({ day: [...json.data.day] as [string, string], night: [...json.data.night] as [string, string] });
   }
 }
