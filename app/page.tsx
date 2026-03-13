@@ -98,7 +98,7 @@ export default function Home() {
              bg-blue-600 border-t-strong border-[var(--red)]">
 <div className="grid grid-cols-5 text-[8px] sm:text-xs md:text-sm text-white">
           
-          <FooterBtn label="📞 Call" onClick={() => alert("Call feature coming soon")} />
+          <FooterBtn label="📞 Call" onClick={() => alert("Call 9686255711")} />
           
           <FooterBtn
             label="👁️ See Result"
