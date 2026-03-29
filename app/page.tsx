@@ -424,8 +424,8 @@ function splitDraft(draft: string): [string, string, string] {
 
 function getTiming(type: "day" | "night"): string {
   return type === "day"
-    ? "12:30 PM – 01:30 PM"
-    : "08:00 PM – 10:30 PM";
+    ? "11:00 PM – 12:00 PM"
+    : "06:30 PM – 07:30 PM";
 }
 
 /* ---------- component ---------- */
@@ -459,10 +459,10 @@ export function Tini({
     const [a, b, c] = splitDraft(draft);
 
     // strict 3-2-3 validation
-    if (a.length !== 3 || b.length !== 2 || c.length !== 3) {
-      alert("Format must be 3-2-3 digits");
-      return;
-    }
+    // if (a.length !== 3 || b.length !== 2 || c.length !== 3) {
+    //   alert("Format must be 3-2-3 digits");
+    //   return;
+    // }
 
     setSaving(true);
 
