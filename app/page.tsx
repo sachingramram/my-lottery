@@ -226,13 +226,13 @@ function FooterBtn({
     {/* Maa & Shree text (top row) */}
     <div className="w-full relative mb-2 sm:mb-3">
       {/* माँ - Left */}
-      <span className="absolute left-6 sm:left-10 text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
+      <span className="absolute left-2 sm:left-4 text-[var(--red)] text-xl sm:text-3xl md:text-4xl font-bold">
         माँ
       </span>
 
       {/* श्री - Center */}
       <div className="text-center flex flex-col items-center">
-        <span className="text-[var(--red)] text-2xl sm:text-4xl md:text-5xl font-bold">
+        <span className="text-[var(--red)] text-xl sm:text-3xl md:text-4xl font-bold">
           श्री
         </span>
          <span className="mt-1 italic text-[var(--red)] text-[18px] sm:text-xs md:text-sm opacity-80">
@@ -424,7 +424,7 @@ function splitDraft(draft: string): [string, string, string] {
 
 function getTiming(type: "day" | "night"): string {
   return type === "day"
-    ? "11:00 PM – 12:00 PM"
+    ? "11:00 AM – 12:00 PM"
     : "06:30 PM – 07:30 PM";
 }
 
